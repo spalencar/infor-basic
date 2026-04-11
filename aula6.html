@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 06: Primeiros Passos com o Mouse</title>
+    <style>
+        /* ================================================= */
+        /* ESTILOS CSS DA AULA (LAYOUT ESCURO E CORRIGIDO)   */
+        /* ================================================= */
+        :root {
+            --cor-principal: #035730; /* Verde do painel */
+            --cor-secundaria: #009688; /* Verde Água para destaque */
+            --cor-fundo-escuro: #121212; /* Fundo principal escuro */
+            --cor-cartao-claro: #1e1e1e; /* Fundo dos slides/cartões */
+            --cor-texto-claro: #e0e0e0; /* Cor do texto em fundo escuro */
+            --cor-sucesso: #4CAF50; 
+            --cor-erro: #F44336;
+            --tamanho-titulo: 2.2em;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--cor-fundo-escuro);
+            color: var(--cor-texto-claro);
+            height: 100vh;
+            overflow: hidden; /* Impede o scroll principal da página */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ------------------ CABEÇALHO DA AULA ------------------ */
+        .aula-header {
+            background-color: var(--cor-principal);
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .aula-header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        /* ------------------ CONTEÚDO DOS SLIDES ------------------ */
+        .content-area {
+            flex-grow: 1;
+            display: grid; 
+            padding: 20px;
+            overflow: hidden; 
+        }
+
+        .slide {
+            grid-area: 1 / 1;
+            visibility: hidden; 
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            
+            background: var(--cor-cartao-claro); 
+            color: var(--cor-texto-claro);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 40px;
+            overflow-y: auto; /* Permite scroll apenas dentro do slide */
+        }
+
+        .slide.active {
+            visibility: visible;
+            opacity: 1; 
+        }
+
+        .slide-image-container {
+            flex: 1;
+            text-align: center;
+        }
+
+        .slide-image {
+            max-width: 90%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .slide-text-container {
+            flex: 2;
+        }
+
+        .slide-text-container h2 {
+            color: var(--cor-secundaria);
+            font-size: var(--tamanho-titulo);
+            border-bottom: 3px solid var(--cor-secundaria);
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+
+        .slide-text-container p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            text-align: justify;
+        }
+        
+        /* Estilo do botão de quiz no slide */
+        #quizLink {
+            font-size: 1.2em;
+            color: white !important; 
+            background-color: var(--cor-sucesso); 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            text-decoration: none; 
+            display: block;
+            width: fit-content;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+        #quizLink:hover {
+            background-color: #387c3a;
+        }
+
+        /* ------------------ CONTROLES DE NAVEGAÇÃO ------------------ */
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--cor-cartao-claro); 
+            border-top: 1px solid #333;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        /* EFEITOS DE HOVER E ACTIVE */
+        #prevBtn {
+            background-color: #343a40;
+            color: white;
+        }
+        #prevBtn:hover {
+            background-color: #495057;
+        }
+        #prevBtn:active {
+            transform: scale(0.98);
+        }
+
+        #nextBtn {
+            background-color: var(--cor-principal);
+            color: white;
+        }
+        #nextBtn:hover {
+            background-color: #046e3d;
+        }
+        #nextBtn:active {
+            transform: scale(0.98);
+        }
+
+        #prevBtn:disabled, #nextBtn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #readTextBtn:hover {
+            background-color: #00796b;
+        }
+
+        .info-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: bold;
+            color: var(--cor-secundaria);
+        }
+
+        /* ------------------ MODAL (QUIZ) ------------------ */
+        .modal {
+            display: none;
+            position: absolute; 
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            /* Configuração padrão de centralização */
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Garante que o modal apareça centralizado, forçando display: flex quando o JS chama */
+        .modal[style*="display: block"], 
+        .modal[style*="display: flex"] {
+            display: flex !important;
+        }
+
+        .modal-content {
+            background-color: #2e2e2e;
+            color: var(--cor-texto-claro);
+            margin: 0;
+            padding: 20px;
+            border: 1px solid #333;
+            width: 80%; 
+            max-width: 600px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .quiz-question h3 {
+            color: var(--cor-secundaria);
+        }
+        
+        .quiz-option {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .quiz-option:hover {
+            background-color: #444;
+        }
+
+        .quiz-option label {
+            display: block;
+            cursor: pointer;
+        }
+
+        .quiz-option.correct {
+            background-color: rgba(76, 175, 80, 0.3);
+            border-left: 5px solid var(--cor-sucesso);
+        }
+
+        .quiz-option.incorrect {
+            background-color: rgba(244, 67, 54, 0.3);
+            border-left: 5px solid var(--cor-erro);
+        }
+        
+        .close-btn {
+            color: var(--cor-texto-claro);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #ccc;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="aula-header">
+        <h1>Aula 06: Primeiros Passos com o Mouse</h1>
+    </div>
+
+    <div class="content-area">
+
+        <div class="slide" id="slide-1">
+            <div class="slide-image-container">
+                <img src="imagens/aula6/slide1.jpg" alt="Mouse do computador" class="slide-image">
+            </div>
+       
+            <div class="slide-text-container">
+                <h2>O Mouse: Seu Guia na Tela</h2>
+                <p id="text-1">
+                    O Mouse é um periférico de entrada essencial, pois permite que você se comunique e interaja com o Sistema Operacional de forma intuitiva. Pense nele como sua "mão" dentro do computador. O mouse tradicional tem dois botões (esquerdo e direito) e uma roda de rolagem (scroll) no centro. A forma correta de segurá-lo é com a mão relaxada, para que o movimento venha do pulso e não do braço.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-2">
+            <div class="slide-image-container">
+                <img src="imagens/aula6/slide2.jpg" alt="Ponteiro do mouse na tela" class="slide-image">
+            </div>
+            <div class="slide-text-container">
+        
+                <h2>O Ponteiro (Cursor)</h2>
+                <p id="text-2">
+                    Quando você move o mouse na mesa, um ícone se move na tela: é o Ponteiro (ou Cursor). Ele geralmente tem o formato de uma seta, mas pode mudar de aparência para indicar diferentes ações. Por exemplo, ele vira uma mãozinha para indicar que algo é clicável (um link), ou uma flecha dupla para indicar que você pode redimensionar uma janela. O ponteiro mostra onde a sua ação (clique) será aplicada.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-3">
+            <div class="slide-image-container">
+                <img src="imagens/aula6/slide3.jpg" alt="Clique simples" class="slide-image">
+            </div>
+            
+            <div class="slide-text-container">
+                <h2>Ação 1: Clicar (Clique Simples)</h2>
+                <p id="text-3">
+                    A ação mais comum é o Clique Simples, feito com o Botão Esquerdo do mouse. Ele tem duas funções principais: Selecionar (destacar um arquivo, ícone ou texto) e Ativar (clicar em um botão ou link). Ao clicar uma vez em um ícone na Área de Trabalho, você o seleciona. Ao clicar uma vez em um botão, você ativa aquela função.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-4">
+            <div class="slide-image-container">
+                <img src="imagens/aula6/slide4.jpg" alt="Clique duplo" class="slide-image">
+            </div>
+            <div class="slide-text-container">
+       
+                <h2>Ação 2: Clicar Duas Vezes</h2>
+                <p id="text-4">
+                    O Clique Duplo (dois cliques rápidos com o botão esquerdo) é a ação usada para Abrir. Se você quer iniciar um programa (usando um atalho na Área de Trabalho) ou abrir um arquivo, você deve fazer o clique duplo. É crucial que os dois cliques sejam muito rápidos para que o computador entenda que você quer abrir, e não apenas selecionar duas vezes.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-5">
+            <div class="slide-image-container">
+                <img src="imagens/aula6/slide5.jpg" alt="Arrastar e Soltar" class="slide-image">
+            </div>
+            <div class="slide-text-container">
+            
+                <h2>Ação 3: Arrastar e Soltar</h2>
+                <p id="text-5">
+                    Para mover um item na tela, usamos a técnica de Arrastar e Soltar (Drag and Drop). Funciona assim: 1) Posicione o ponteiro sobre o item. 2) Pressione e segure o botão esquerdo. 3) Mova o mouse (e o item vai junto). 4) Solte o botão esquerdo onde você quer que o item pare. Essa ação é usada para reorganizar ícones, mover arquivos entre pastas e redimensionar janelas.
+                </p>
+                <a href="#" id="quizLink" onclick="openQuizModal(event)">
+                    ✅ Iniciar Quiz e Testar Seus Conhecimentos!
+                </a>
+                <a href="atividade6.html" id="quizLink">
+                    🕹️ Iniciar Atividade de Correspondência
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-controls">
+        <button id="prevBtn" class="nav-button" disabled>« Anterior</button>
+        
+        <div class="info-controls">
+            <span id="slideCounter">1 de 5</span>
+            <button id="readTextBtn" title="Ouvir o texto atual">🔊 Ler Texto</button>
+        
+        </div>
+
+        <button id="nextBtn" class="nav-button">Próximo »</button>
+    </div>
+
+    <div id="quizModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeQuizModal()">&times;</span>
+            <h2>Quiz da Aula 06: Primeiros Passos com o Mouse</h2>
+            <form id="quizForm">
+                
+          
+                <div class="quiz-question" data-question="1">
+                    <h3>1. Qual a função principal do mouse?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="a"> A) Interagir com a interface gráfica, movendo o cursor.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="b"> B) Digitar textos e números rapidamente.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="c"> C) Armazenar fotos e documentos permanentemente.</label></div>
+         
+                </div>
+
+                <div class="quiz-question" data-question="2">
+                    <h3>2. Qual ação do mouse é usada para abrir um programa a partir de um ícone de atalho na Área de Trabalho?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q2" value="a"> A) Clicar com o botão direito</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q2" value="b"> B) Clique simples (uma vez)</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q2" value="c"> C) Clique duplo (duas vezes rápido)</label></div>
+         
+                </div>
+                
+                <div class="quiz-question" data-question="3">
+                    <h3>3. Qual o nome do ícone que se move na tela quando você mexe o mouse?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="a"> A) Janela</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="b"> B) Ponteiro ou Cursor</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="c"> C) Atalho</label></div>
+             
+                </div>
+
+                <div class="quiz-question" data-question="4">
+                    <h3>4. Qual técnica é usada para mover um arquivo de lugar, segurando o botão esquerdo e soltando-o no destino?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="a"> A) Arrastar e Soltar (Drag and Drop)</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="b"> B) Rolagem (Scroll)</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="c"> C) Clicar Duas Vezes</label></div>
+                </div>
+                
+
+                <button type="button" id="quizSubmitBtn" onclick="submitQuiz()">Finalizar Quiz</button>
+                <div id="quizResult" style="margin-top: 20px; font-weight: bold;"></div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        // Variáveis de Controle
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        // RESPOSTAS CORRETAS DA AULA 06 (PRIMEIROS PASSOS COM O MOUSE)
+        const correctAnswers = { 'q1': 'a', 'q2': 'c', 'q3': 'b', 'q4': 'a' };
+        
+        let synth = window.speechSynthesis;
+        let isSpeaking = false;
+        
+        // =================================================
+        // FUNÇÕES DE NAVEGAÇÃO DOS SLIDES
+        // =================================================
+
+        function showSlide(index) {
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            if (index < 0) {
+                currentSlide = 0;
+            } else if (index >= totalSlides) {
+                currentSlide = totalSlides - 1;
+            } else {
+                currentSlide = index;
+            }
+
+            slides[currentSlide].classList.add('active');
+            document.getElementById('slideCounter').textContent = `${currentSlide + 1} de ${totalSlides}`;
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+
+            const quizLink = document.getElementById('quizLink');
+            if (quizLink) {
+                 quizLink.style.display = (currentSlide === totalSlides - 1) ?
+                'block' : 'none';
+            }
+
+            stopReading(); // Garante que a leitura pare ao mudar de slide
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        });
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        });
+        // Inicializa o primeiro slide
+        showSlide(0);
+
+        // =================================================
+        // FUNÇÕES DE LEITURA DE TEXTO
+        // =================================================
+        function readText() {
+            if (!synth) {
+                alert("A leitura de voz não está disponível no seu navegador.");
+                return;
+            }
+
+            if (isSpeaking) {
+                stopReading();
+                return;
+            }
+            
+            const textId = `text-${currentSlide + 1}`;
+            const textElement = document.getElementById(textId);
+            
+            if (textElement) {
+                synth.cancel();
+                const textToSpeak = textElement.textContent;
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                
+                utterance.lang = 'pt-BR';
+                utterance.rate = 0.9;
+                utterance.onstart = () => {
+                    isSpeaking = true;
+                    document.getElementById('readTextBtn').textContent = '⏹️ Parar Leitura';
+                };
+
+                utterance.onend = () => {
+                    isSpeaking = false;
+                    document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+                };
+                
+                try {
+                    synth.speak(utterance);
+                } catch (e) {
+                    console.error("Erro ao iniciar a leitura de voz:", e);
+                    alert("Não foi possível iniciar a leitura. Tente novamente.");
+                    isSpeaking = false;
+                    document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+                }
+            }
+        }
+
+        function stopReading() {
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            isSpeaking = false;
+            document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+        }
+
+        document.getElementById('readTextBtn').addEventListener('click', readText);
+
+        // =================================================
+        // FUNÇÕES DO QUIZ 
+        // =================================================
+        function openQuizModal(event) {
+            event.preventDefault();
+            stopReading();
+            document.getElementById('quizModal').style.display = 'flex';
+            document.getElementById('quizResult').textContent = '';
+            
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'incorrect');
+            });
+            document.getElementById('quizSubmitBtn').disabled = false;
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quizModal').style.display = 'none';
+        }
+        
+        function submitQuiz() {
+            const form = document.getElementById('quizForm');
+            let score = 0;
+            
+            const totalQuestions = Object.keys(correctAnswers).length; 
+            
+            document.getElementById('quizSubmitBtn').disabled = true;
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'incorrect');
+            });
+
+            for (let i = 1; i <= totalQuestions; i++) {
+                const questionName = `q${i}`;
+                const selectedElement = form.elements[questionName] ? form.elements[questionName].value : null;
+                const correctAnswer = correctAnswers[questionName];
+                const questionDiv = document.querySelector(`.quiz-question[data-question="${i}"]`);
+
+                const options = questionDiv.querySelectorAll('.quiz-option');
+
+                options.forEach(optionDiv => {
+                    const radio = optionDiv.querySelector(`input[name="${questionName}"]`);
+                    
+                    if (radio && radio.value === correctAnswer) {
+                        optionDiv.classList.add('correct');
+                    } else if (radio && radio.checked && radio.value !== correctAnswer) {
+                        optionDiv.classList.add('incorrect');
+                    }
+                });
+
+                if (selectedElement === correctAnswer) {
+                    score++;
+                }
+            }
+
+            const resultElement = document.getElementById('quizResult');
+            
+            if (score === totalQuestions) {
+                resultElement.innerHTML = `<span style="color: var(--cor-sucesso);">Parabéns! Você acertou todas (${score}/${totalQuestions})!</span> Você é um(a) gênio!`;
+            } else {
+                resultElement.innerHTML = `<span style="color: var(--cor-erro);">Você acertou ${score} de ${totalQuestions} perguntas.</span> Revise os slides para aprender mais!`;
+            }
+        }
+    </script>
+
+</body>
+</html>

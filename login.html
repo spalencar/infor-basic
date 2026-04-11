@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Curso de Informática Básica</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #0f172a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        color: #e2e8f0;
+      }
+      .login-container {
+        background-color: #111827;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.6);
+        width: 340px;
+        text-align: center;
+      }
+      .login-container h2 {
+        margin-bottom: 20px;
+        color: #38bdf8;
+      }
+      .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #cbd5e1;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        box-sizing: border-box;
+        background-color: #1e293b;
+        color: #e2e8f0;
+      }
+      .form-group input::placeholder {
+        color: #94a3b8;
+      }
+      .login-btn {
+        width: 100%;
+        padding: 12px;
+        background-color: #22c55e;
+        color: #0f172a;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      .login-btn:hover {
+        background-color: #16a34a;
+      }
+      .error-message {
+        color: #f87171;
+        margin-top: 10px;
+        display: none;
+      }
+      .back-btn {
+        margin-top: 20px;
+        background-color: transparent;
+        color: #38bdf8;
+        border: 1px solid #38bdf8;
+        padding: 10px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .back-btn:hover {
+        background-color: rgba(56, 189, 248, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <h2>Login</h2>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">E-mail:</label>
+          <input type="email" id="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Senha:</label>
+          <input type="password" id="password" required />
+        </div>
+        <button type="submit" class="login-btn">Entrar</button>
+      </form>
+      <div id="error-message" class="error-message"></div>
+      <button class="back-btn" onclick="window.location.href = 'index.html'">
+        Voltar
+      </button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import {
+        getAuth,
+        signInWithEmailAndPassword,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+      // Configuração do Firebase (substitua pelas suas credenciais)
+      const firebaseConfig = {
+        apiKey: "AIzaSyB60LaJaxphLZvb2c0T3t8T9DYTPgTXFL0",
+        authDomain: "infor-basic.firebaseapp.com",
+        projectId: "infor-basic",
+        storageBucket: "infor-basic.firebasestorage.app",
+        messagingSenderId: "152738530319",
+        appId: "1:152738530319:web:0c9644a18c6e340b2c8f7a",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+
+          try {
+            const userCredential = await signInWithEmailAndPassword(
+              auth,
+              email,
+              password,
+            );
+            // Login bem-sucedido
+            localStorage.setItem("userLoggedIn", "true");
+            localStorage.setItem("userId", userCredential.user.uid);
+            window.location.href = "index.html";
+          } catch (error) {
+            document.getElementById("error-message").textContent =
+              "Erro no login: " + error.message;
+            document.getElementById("error-message").style.display = "block";
+          }
+        });
+    </script>
+  </body>
+</html>

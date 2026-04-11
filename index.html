@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Curso de Informática Básica</title>
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+        setDoc,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+      // Configuração do Firebase (substitua pelas suas credenciais)
+      const firebaseConfig = {
+        apiKey: "AIzaSyB60LaJaxphLZvb2c0T3t8T9DYTPgTXFL0",
+        authDomain: "infor-basic.firebaseapp.com",
+        projectId: "infor-basic",
+        storageBucket: "infor-basic.firebasestorage.app",
+        messagingSenderId: "152738530319",
+        appId: "1:152738530319:web:0c9644a18c6e340b2c8f7a",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      window.currentUser = null;
+      window.domReady = false;
+      window.pendingUser = null;
+
+      function handleAuthStateChanged(user) {
+        window.currentUser = user;
+        const authButton = document.getElementById("auth-button");
+        if (!authButton) return;
+
+        if (user) {
+          authButton.textContent = "Logout";
+          loadLessonStatuses(user.uid);
+        } else {
+          authButton.textContent = "Login";
+          // Mantém os estados atuais carregados mesmo após logout.
+          // Não resetamos para poder visualizar as aulas liberadas.
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        window.domReady = true;
+        if (window.pendingUser !== null) {
+          handleAuthStateChanged(window.pendingUser);
+          window.pendingUser = null;
+        }
+      });
+
+      onAuthStateChanged(auth, (user) => {
+        if (window.domReady) {
+          handleAuthStateChanged(user);
+        } else {
+          window.pendingUser = user;
+        }
+      });
+
+      function updateStatusButton(button, status) {
+        button.textContent = status ? "Ativo" : "Pendente";
+        button.classList.toggle("active", status);
+        button.style.backgroundColor = status ? "#51cf66" : "#ff6b6b";
+      }
+
+      // Carregar status das aulas do Firestore
+      async function loadLessonStatuses(userId) {
+        try {
+          const statusDocRef = doc(db, "config", "aulasStatus");
+          const statusDoc = await getDoc(statusDocRef);
+          console.log("Documento aulasStatus existe:", statusDoc.exists());
+          if (statusDoc.exists()) {
+            const statuses = statusDoc.data().lessonStatuses || {};
+            console.log("Statuses carregados:", statuses);
+            Object.keys(statuses).forEach((lesson) => {
+              const button = document.getElementById(`status-${lesson}`);
+              if (button) {
+                updateStatusButton(button, statuses[lesson]);
+                console.log(
+                  `Botão ${lesson} atualizado para: ${statuses[lesson] ? "Ativo" : "Pendente"}`,
+                );
+              } else {
+                console.log(`Botão status-${lesson} não encontrado`);
+              }
+            });
+          } else {
+            console.log("Documento aulasStatus não existe");
+          }
+        } catch (error) {
+          console.error("Erro ao carregar statuses:", error);
+        }
+      }
+
+      // Resetar status quando não logado
+      function resetLessonStatuses() {
+        const buttons = document.querySelectorAll(".status-toggle");
+        buttons.forEach((button) => updateStatusButton(button, false));
+      }
+
+      // Toggle status da aula
+      window.toggleStatus = async function (lesson) {
+        if (!window.currentUser) {
+          alert("Você precisa estar logado para alterar o status das aulas.");
+          return;
+        }
+
+        const button = document.getElementById(`status-${lesson}`);
+        if (!button) {
+          console.error("Botão de status não encontrado para", lesson);
+          return;
+        }
+
+        const isActive = button.classList.contains("active");
+        const newStatus = !isActive;
+        updateStatusButton(button, newStatus);
+
+        // Salvar no Firestore no documento permitido pelas regras
+        try {
+          const statusDocRef = doc(db, "config", "aulasStatus");
+          const statusDoc = await getDoc(statusDocRef);
+          const statuses = statusDoc.exists()
+            ? statusDoc.data().lessonStatuses || {}
+            : {};
+          statuses[lesson] = newStatus;
+          await setDoc(
+            statusDocRef,
+            { lessonStatuses: statuses },
+            { merge: true },
+          );
+          console.log(`Status ${lesson} salvo como: ${newStatus}`);
+        } catch (error) {
+          console.error("Erro ao salvar status:", error);
+        }
+      };
+
+      // Toggle login/logout
+      window.toggleAuth = function () {
+        if (window.currentUser) {
+          signOut(auth).then(() => {
+            window.currentUser = null;
+            localStorage.removeItem("userLoggedIn");
+            localStorage.removeItem("userId");
+          });
+        } else {
+          window.location.href = "login.html";
+        }
+      };
+    </script>
+    <style>
+      /* ================================================= */
+      /* ESTILOS CSS                       */
+      /* ================================================= */
+
+      :root {
+        --cor-verde: #035730; /* Cor padrão para cabeçalho e menu */
+        --largura-menu: 350px; /* Aumentado para acomodar botões extras */
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        display: flex; /* Permite posicionar o menu e o conteúdo */
+        height: 100vh; /* Ocupa a altura total da viewport */
+        overflow: hidden; /* Evita barras de rolagem desnecessárias no corpo */
+      }
+
+      /* ------------------ CABEÇALHO ------------------ */
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background-color: var(--cor-verde);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1000; /* Garante que fique acima de outros elementos */
+        box-sizing: border-box; /* Garante que o padding não aumente a largura */
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 20px;
+      }
+
+      .logotipo {
+        display: flex;
+        align-items: center;
+      }
+
+      #logo {
+        height: 40px; /* Ajuste conforme o tamanho real da sua logo.png */
+        margin-right: 15px;
+        background-color: #035730; /* Adicionado para destacar caso a logo tenha fundo transparente */
+        padding: 5px;
+        border-radius: 5px;
+      }
+
+      header h1 {
+        font-size: 1.5em;
+        margin: 0;
+      }
+
+      .auth-button {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid white;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: background-color 0.2s;
+      }
+
+      .auth-button:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+
+      /* ------------------ MENU LATERAL ------------------ */
+      #menu-lateral {
+        position: fixed;
+        top: 60px; /* Abaixo do cabeçalho */
+        left: 0;
+        width: var(--largura-menu);
+        height: calc(100vh - 60px); /* Altura restante da tela */
+        background-color: var(--cor-verde);
+        color: white;
+        padding: 20px 0;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        overflow-y: auto; /* Adiciona barra de rolagem se o conteúdo for maior que a tela */
+        box-sizing: border-box;
+        z-index: 999;
+      }
+
+      #menu-lateral h2 {
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 20px;
+        padding: 0 10px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 10px;
+        font-size: 1.3em;
+      }
+
+      .menu-item {
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 10px;
+        margin-bottom: 5px;
+      }
+
+      .menu-botao {
+        flex: 1;
+        padding: 10px 15px;
+        text-align: left;
+        border: none;
+        background-color: transparent;
+        color: white;
+        font-size: 1em;
+        cursor: pointer;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
+      }
+
+      .status-toggle {
+        width: 80px;
+        padding: 5px 10px;
+        margin-left: 10px;
+        background-color: #ff6b6b;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.8em;
+        transition: background-color 0.2s;
+      }
+
+      .menu-botao:hover {
+        background-color: rgba(192, 221, 25, 0.3);
+      }
+
+      .menu-botao:active {
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: scale(0.99);
+      }
+
+      .status-toggle.active {
+        background-color: #51cf66;
+      }
+
+      /* ------------------ CONTEÚDO PRINCIPAL ------------------ */
+      #conteudo-principal {
+        margin-left: var(--largura-menu); /* Espaço para o menu */
+        margin-top: 60px; /* Espaço para o cabeçalho */
+        width: calc(100% - var(--largura-menu));
+        height: calc(100vh - 60px);
+        position: relative;
+      }
+
+      /* ------------------ TELA DE BOAS-VINDAS ------------------ */
+      #boas-vindas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("./imagens/fundo-boas-vindas.jpg"); /* **IMPORTANTE: Mude para o caminho da sua imagem** */
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: white;
+        text-align: center;
+        z-index: 50; /* Fica acima do iframe quando visível */
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      #boas-vindas.hidden {
+        opacity: 0;
+        pointer-events: none; /* Permite clicar no iframe por baixo */
+        z-index: 1;
+      }
+
+      #boas-vindas-texto {
+        font-size: 2.5em;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        background-color: rgba(
+          0,
+          0,
+          0,
+          0.4
+        ); /* Fundo semi-transparente para destaque */
+        padding: 20px 40px;
+        border-radius: 10px;
+      }
+
+      /* ------------------ IFRAME ------------------ */
+      #iframe-aulas {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background-color: white; /* Cor de fundo padrão para as páginas de aula */
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo-container">
+        <div class="logotipo">
+          <img id="logo" src="imagens/logo.png" alt="Logotipo do Curso" />
+          <p>INSTITUTO CASA VERDE</p>
+        </div>
+        <h1>Curso de Informática Básica</h1>
+        <button id="auth-button" class="auth-button" onclick="toggleAuth()">
+          Login
+        </button>
+      </div>
+    </header>
+
+    <nav id="menu-lateral">
+      <h2>Menu das Aulas</h2>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula1.html')">
+          01: O Computador e Seus Amigos
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula1"
+          onclick="toggleStatus('aula1')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula2.html')">
+          02: O que é Hardware?
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula2"
+          onclick="toggleStatus('aula2')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula3.html')">
+          03: O que é Software?
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula3"
+          onclick="toggleStatus('aula3')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula4.html')">
+          04: Conhecendo o Sistema Operacional
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula4"
+          onclick="toggleStatus('aula4')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula5.html')">
+          05: Explorando a Área de Trabalho
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula5"
+          onclick="toggleStatus('aula5')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula6.html')">
+          06: Primeiros Passos com o Mouse
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula6"
+          onclick="toggleStatus('aula6')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula7.html')">
+          07: Usando o Teclado Mágico
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula7"
+          onclick="toggleStatus('aula7')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula8.html')">
+          08: Abrindo e Fechando Programas
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula8"
+          onclick="toggleStatus('aula8')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula9.html')">
+          09: Salvar e Encontrar Arquivos
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula9"
+          onclick="toggleStatus('aula9')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula10.html')">
+          10: O Mundo da Internet
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula10"
+          onclick="toggleStatus('aula10')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula11.html')">
+          11: Navegando com Segurança
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula11"
+          onclick="toggleStatus('aula11')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula12.html')">
+          12: Criando Textos no Editor
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula12"
+          onclick="toggleStatus('aula12')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula13.html')">
+          13: E-mail e Comunicação Digital
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula13"
+          onclick="toggleStatus('aula13')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula14.html')">
+          14: Jogos Educativos e Aplicativos
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula14"
+          onclick="toggleStatus('aula14')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('aula15.html')">
+          15: Manutenção e Cuidados com o PC
+        </button>
+        <button
+          class="status-toggle"
+          id="status-aula15"
+          onclick="toggleStatus('aula15')"
+        >
+          Pendente
+        </button>
+      </div>
+      <div class="menu-item">
+        <button class="menu-botao" onclick="carregarAula('atividades.html')">
+          Atividades Criativas
+        </button>
+        <button
+          class="status-toggle"
+          id="status-atividades"
+          onclick="toggleStatus('atividades')"
+        >
+          Pendente
+        </button>
+      </div>
+    </nav>
+
+    <main id="conteudo-principal">
+      <div id="boas-vindas">
+        <span id="boas-vindas-texto"
+          >Bem-vindo à sua jornada no Mundo da Informática!</span
+        >
+      </div>
+
+      <iframe id="iframe-aulas" name="iframe-aulas" src="about:blank"></iframe>
+    </main>
+
+    <script>
+      function carregarAula(urlDaAula) {
+        const iframe = document.getElementById("iframe-aulas");
+        const boasVindas = document.getElementById("boas-vindas");
+
+        // Verificar se a aula está ativa
+        const lesson = urlDaAula.replace(".html", "");
+        const button = document.getElementById(`status-${lesson}`);
+        console.log("carregarAula", {
+          urlDaAula,
+          lesson,
+          button,
+          currentUser: !!window.currentUser,
+        });
+        if (button && !button.classList.contains("active")) {
+          alert("Esta aula ainda não foi liberada. Contate o administrador.");
+          return;
+        }
+
+        // 1. Carrega a URL da aula no iframe
+        iframe.src = urlDaAula;
+        iframe.style.visibility = "visible";
+        iframe.style.pointerEvents = "auto";
+
+        // 2. Esconde a tela de boas-vindas
+        boasVindas.classList.add("hidden");
+      }
+
+      // Função para reinicializar o painel quando volta
+      window.resetPainel = function () {
+        const iframe = document.getElementById("iframe-aulas");
+        const boasVindas = document.getElementById("boas-vindas");
+
+        console.log("Reinicializando painel...");
+        iframe.src = "about:blank";
+        boasVindas.classList.remove("hidden");
+
+        // Recarregar status das aulas
+        if (window.currentUser) {
+          loadLessonStatuses(window.currentUser.uid);
+        }
+      };
+
+      // Função extra para garantir que o iframe inicial não tenha conteúdo visível
+      window.onload = function () {
+        document.getElementById("iframe-aulas").src = "about:blank";
+
+        // Monitorar mudanças no iframe e recarregar status quando voltar
+        const iframe = document.getElementById("iframe-aulas");
+        let lastSrc = iframe.src;
+
+        setInterval(() => {
+          if (iframe.src === "about:blank" && lastSrc !== "about:blank") {
+            console.log("Detectado retorno ao painel, recarregando status...");
+            if (window.currentUser) {
+              loadLessonStatuses(window.currentUser.uid);
+            }
+          }
+          lastSrc = iframe.src;
+        }, 500);
+      };
+    </script>
+  </body>
+</html>

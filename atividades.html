@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atividades Criativas: Quiz Interativo</title>
+    <style>
+        /* ================================================= */
+        /* ESTILOS CSS DA AULA (LAYOUT ESCURO E CORRIGIDO)   */
+        /* ================================================= */
+        :root {
+            --cor-principal: #035730; /* Verde do painel */
+            --cor-secundaria: #009688; /* Verde Água para destaque */
+            --cor-fundo-escuro: #121212; /* Fundo principal escuro */
+            --cor-cartao-claro: #1e1e1e; /* Fundo dos slides/cartões */
+            --cor-texto-claro: #e0e0e0; /* Cor do texto em fundo escuro */
+            --cor-sucesso: #4CAF50; 
+            --cor-erro: #F44336;
+            --tamanho-titulo: 1.8em;
+            --tamanho-questao: 1.5em;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--cor-fundo-escuro);
+            color: var(--cor-texto-claro);
+            height: 100vh;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ------------------ CABEÇALHO DA AULA ------------------ */
+        .aula-header {
+            background-color: var(--cor-principal);
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .aula-header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        /* ------------------ CONTEÚDO DOS SLIDES ------------------ */
+        .content-area {
+            flex-grow: 1;
+            display: grid; 
+            padding: 20px;
+            overflow: hidden; 
+        }
+
+        .slide {
+            grid-area: 1 / 1;
+            visibility: hidden; 
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            
+            background: var(--cor-cartao-claro); 
+            color: var(--cor-texto-claro);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto; 
+            text-align: center;
+        }
+
+        .slide.active {
+            visibility: visible;
+            opacity: 1; 
+        }
+
+        /* Área da Pergunta e Imagem */
+        .quiz-header {
+            width: 80%;
+            margin-bottom: 20px;
+        }
+
+        .quiz-header h2 {
+            color: var(--cor-secundaria);
+            font-size: var(--tamanho-questao);
+            margin-top: 0;
+        }
+
+        .slide-image {
+            max-width: 100%;
+            max-height: 250px; /* Limita a altura da imagem */
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            margin-bottom: 15px;
+        }
+
+        /* Área das Opções */
+        .options-container {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 10px;
+        }
+
+        .quiz-option {
+            background-color: #333;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: left;
+            border: 2px solid transparent;
+        }
+
+        .quiz-option:hover:not(.answered) {
+            background-color: #444;
+        }
+        
+        /* Estilos de feedback */
+        .quiz-option.correct {
+            background-color: var(--cor-sucesso);
+            color: #121212;
+            font-weight: bold;
+            border-color: var(--cor-principal);
+            cursor: default; /* Remove o ponteiro ao ser respondido */
+        }
+
+        .quiz-option.incorrect {
+            background-color: var(--cor-erro);
+            color: white;
+            border-color: #121212;
+            font-weight: bold;
+            cursor: default; /* Remove o ponteiro ao ser respondido */
+        }
+        
+        /* Estilo para opções não selecionadas após resposta */
+        .slide.answered .quiz-option:not(.correct):not(.incorrect) {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+
+        /* Mensagem de Feedback */
+        .feedback-message {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            min-height: 30px; /* Garante que a área não encolha */
+        }
+
+        /* ------------------ CONTROLES DE NAVEGAÇÃO ------------------ */
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--cor-cartao-claro); 
+            border-top: 1px solid #333;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        
+        #nextBtn {
+            background-color: var(--cor-principal);
+            color: white;
+            /* Inicia hidden no HTML, controlado pelo JS */
+        }
+        
+        #prevBtn {
+            background-color: #343a40;
+            color: white;
+        }
+        
+        #homeBtn {
+             background-color: #00796b;
+             color: white;
+        }
+        #homeBtn:hover {
+            background-color: #00695c;
+        }
+        
+        .nav-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: bold;
+            color: var(--cor-secundaria);
+        }
+        
+        /* Esconde o botão de leitura, pois aqui o foco é a imagem/pergunta */
+        #readTextBtn {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="aula-header">
+        <h1>🎮 Atividades Criativas: Quiz Interativo de Conhecimento</h1>
+    </div>
+
+    <div class="content-area">
+
+        <div class="slide" id="slide-1" data-correct="a">
+            <div class="quiz-header">
+                <h2>1. Qual é o "Cérebro" do computador que o faz pensar e processar informações?</h2>
+                <img src="imagens/atividades/atividade01.jpg" alt="Desenho de um gabinete/CPU" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) A CPU (Gabinete), que guarda os componentes principais.</div>
+                <div class="quiz-option" data-value="b">B) O Mouse, que serve para clicar.</div>
+                <div class="quiz-option" data-value="c">C) O Monitor, que mostra as imagens.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-2" data-correct="a">
+            <div class="quiz-header">
+                <h2>2. O que acontece quando você clica duas vezes no ícone de um programa?</h2>
+                <img src="imagens/atividades/atividade02.jpg" alt="Ícone de aplicativo sendo clicado" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) O programa abre para que você possa usá-lo.</div>
+                <div class="quiz-option" data-value="b">B) O ícone muda de cor.</div>
+                <div class="quiz-option" data-value="c">C) O computador desliga automaticamente.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-3" data-correct="a">
+            <div class="quiz-header">
+                <h2>3. Se você digitou uma letra errada, qual tecla deve usar para APAGAR a letra?</h2>
+                <img src="imagens/atividades/atividade03.jpg" alt="Teclado com o botão Backspace destacado" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Backspace (a tecla com uma seta grande para a esquerda).</div>
+                <div class="quiz-option" data-value="b">B) Enter (a tecla para pular linha).</div>
+                <div class="quiz-option" data-value="c">C) Shift (a tecla para fazer letra maiúscula).</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-4" data-correct="a">
+            <div class="quiz-header">
+                <h2>4. Qual é o jeito mais seguro de desligar o computador para não estragar os arquivos?</h2>
+                <img src="imagens/atividades/atividade04.jpg" alt="Botão de Desligar no menu Iniciar" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Clicar no menu Iniciar, depois no botão de Energia e em "Desligar".</div>
+                <div class="quiz-option" data-value="b">B) Puxar o fio da tomada ou da energia.</div>
+                <div class="quiz-option" data-value="c">C) Apenas fechar a tela do notebook.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-5" data-correct="a">
+            <div class="quiz-header">
+                <h2>5. Para ter uma senha "super forte" e difícil de adivinhar, o que ela deve misturar?</h2>
+                <img src="imagens/atividades/atividade05.jpg" alt="Cofre com cadeado e símbolos" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Letras maiúsculas, minúsculas, números e símbolos especiais.</div>
+                <div class="quiz-option" data-value="b">B) Apenas o seu nome e sua idade.</div>
+                <div class="quiz-option" data-value="c">C) Apenas a palavra "senha123".</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+        
+        <div class="slide" id="slide-6" data-correct="a">
+            <div class="quiz-header">
+                <h2>6. Se um arquivo for como um brinquedo, o que é a "Pasta" no computador?</h2>
+                <img src="imagens/atividades/atividade06.jpg" alt="Prateleiras com caixas rotuladas" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Um cesto ou caixa para guardar e organizar os brinquedos do mesmo tipo.</div>
+                <div class="quiz-option" data-value="b">B) Um lugar para esconder os brinquedos.</div>
+                <div class="quiz-option" data-value="c">C) Um programa de desenho.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-7" data-correct="a">
+            <div class="quiz-header">
+                <h2>7. Qual é a principal função da Internet?</h2>
+                <img src="imagens/atividades/atividade07.jpg" alt="Mapa de conexões globais/teia de conexões" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Conectar milhões de computadores e pessoas para trocar informações.</div>
+                <div class="quiz-option" data-value="b">B) Apenas ligar a impressora.</div>
+                <div class="quiz-option" data-value="c">C) Enviar mensagens de texto no celular.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-8" data-correct="a">
+            <div class="quiz-header">
+                <h2>8. Você está em um site estranho que pede seu nome completo e endereço. O que fazer?</h2>
+                <img src="imagens/atividades/atividade08.jpg" alt="Semáforo de segurança" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Fechar o site e pedir ajuda a um adulto imediatamente.</div>
+                <div class="quiz-option" data-value="b">B) Colocar informações falsas.</div>
+                <div class="quiz-option" data-value="c">C) Digitar todas as informações, pois é importante.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-9" data-correct="a">
+            <div class="quiz-header">
+                <h2>9. Para encontrar rápido uma receita de bolo na internet, o que você deve escrever?</h2>
+                <img src="imagens/atividades/atividade09.jpg" alt="Lupa procurando palavras-chave" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) "Receita simples de bolo de chocolate".</div>
+                <div class="quiz-option" data-value="b">B) "Comida doce para aniversário que é redonda".</div>
+                <div class="quiz-option" data-value="c">C) "O que é internet?".</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-10" data-correct="a">
+            <div class="quiz-header">
+                <h2>10. Qual é a regra mais importante antes de baixar qualquer arquivo ou foto?</h2>
+                <img src="imagens/atividades/atividade10.jpg" alt="Seta de download seguro com cadeado" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Verificar se o site é confiável e conhecido.</div>
+                <div class="quiz-option" data-value="b">B) Baixar o arquivo o mais rápido possível.</div>
+                <div class="quiz-option" data-value="c">C) Mudar o nome do arquivo antes de baixar.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-11" data-correct="a">
+            <div class="quiz-header">
+                <h2>11. Na Regra de Ouro, o que você deve pensar antes de postar algo sobre outra pessoa?</h2>
+                <img src="imagens/atividades/atividade11.jpg" alt="Pessoa pensando antes de publicar" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Se você diria a mesma coisa para ela pessoalmente e com educação.</div>
+                <div class="quiz-option" data-value="b">B) Se todos os seus amigos online vão gostar.</div>
+                <div class="quiz-option" data-value="c">C) Se é algo que fará o seu post viralizar (ser visto por todos).</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-12" data-correct="a">
+            <div class="quiz-header">
+                <h2>12. Qual função de formatação você usa para destacar uma palavra-chave no seu texto?</h2>
+                <img src="imagens/atividades/atividade12.jpg" alt="Palavra em negrito B em um editor de texto" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Negrito (geralmente com o botão B) ou Cor da Fonte.</div>
+                <div class="quiz-option" data-value="b">B) Imprimir.</div>
+                <div class="quiz-option" data-value="c">C) Mudar a cor do fundo da página.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-13" data-correct="a">
+            <div class="quiz-header">
+                <h2>13. Para que serve o campo "Assunto" no e-mail?</h2>
+                <img src="imagens/atividades/atividade13.jpg" alt="Campos Para, Assunto e Corpo em um e-mail" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Resumir o que está escrito no e-mail para que a pessoa saiba antes de abrir.</div>
+                <div class="quiz-option" data-value="b">B) Escrever a mensagem inteira.</div>
+                <div class="quiz-option" data-value="c">C) Colocar o seu endereço de e-mail.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-14" data-correct="a">
+            <div class="quiz-header">
+                <h2>14. Se você quer um aplicativo novo para o seu celular, onde é o lugar mais seguro para encontrá-lo?</h2>
+                <img src="imagens/atividades/atividade14.jpg" alt="Ícones de lojas de aplicativos (Google Play/App Store)" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Na Loja Oficial do seu aparelho (Google Play ou App Store).</div>
+                <div class="quiz-option" data-value="b">B) Em um link que alguém te mandou por mensagem.</div>
+                <div class="quiz-option" data-value="c">C) Em um site que você nunca ouviu falar.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+
+        <div class="slide" id="slide-15" data-correct="a">
+            <div class="quiz-header">
+                <h2>15. O que é importante fazer com a poeira para evitar que o PC fique muito lento e esquente?</h2>
+                <img src="imagens/atividades/atividade15.jpg" alt="Pessoa limpando o teclado com um pincel" class="slide-image">
+            </div>
+            <div class="options-container">
+                <div class="quiz-option" data-value="a">A) Limpar o teclado, monitor e gabinete por fora com frequência.</div>
+                <div class="quiz-option" data-value="b">B) Deixar o PC coberto por panos o tempo todo.</div>
+                <div class="quiz-option" data-value="c">C) Colocar um copo de água ao lado do computador.</div>
+            </div>
+            <div class="feedback-message"></div>
+        </div>
+        
+    </div>
+
+    <div class="navigation-controls">
+        <button id="prevBtn" class="nav-button" disabled>« Atividade Anterior</button>
+        
+        <div class="info-controls">
+            <span id="slideCounter">1 de 15</span>
+            <button id="homeBtn" class="nav-button" onclick="window.parent.resetPainel()">🏠 Painel</button>
+        </div>
+
+        <button id="nextBtn" class="nav-button" style="visibility: hidden;">Próxima Atividade »</button>
+    </div>
+
+    <script>
+        // Variáveis de Controle
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length; 
+        
+        // =================================================
+        // FUNÇÕES DE NAVEGAÇÃO DOS SLIDES
+        // =================================================
+
+        function showSlide(index) {
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            if (index < 0) {
+                currentSlide = 0;
+            } else if (index >= totalSlides) {
+                // Mensagem final de conclusão
+                alert("Parabéns! Você concluiu todas as atividades!");
+                currentSlide = totalSlides - 1; 
+            } else {
+                currentSlide = index;
+            }
+
+            slides[currentSlide].classList.add('active');
+            document.getElementById('slideCounter').textContent = `${currentSlide + 1} de ${totalSlides}`;
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            
+            // Controle do botão Próximo: Visível apenas após responder
+            const nextBtn = document.getElementById('nextBtn');
+            const currentSlideElement = slides[currentSlide];
+            
+            // O botão Próximo deve estar visível apenas se o slide já foi respondido
+            if (currentSlideElement.classList.contains('answered')) {
+                nextBtn.style.visibility = 'visible';
+                nextBtn.disabled = currentSlide === totalSlides - 1;
+            } else {
+                nextBtn.style.visibility = 'hidden';
+            }
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        });
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        });
+        
+        function goToHome() {
+            // CORREÇÃO: Força a navegação na janela principal (window.top) para sair do iframe/embedded.
+            window.top.location.href = 'index.html'; 
+        }
+
+        // Inicializa o primeiro slide
+        showSlide(0);
+
+        // =================================================
+        // FUNÇÕES DE INTERATIVIDADE (QUIZ POR SLIDE)
+        // =================================================
+        
+        function checkAnswer(slideElement, selectedOptionElement, selectedValue) {
+            // Evita responder duas vezes
+            if (slideElement.classList.contains('answered')) {
+                return;
+            }
+
+            const correctAnswer = slideElement.getAttribute('data-correct');
+            const feedbackMessage = slideElement.querySelector('.feedback-message');
+            const options = slideElement.querySelectorAll('.quiz-option');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            // Marca o slide como respondido
+            slideElement.classList.add('answered');
+
+            if (selectedValue === correctAnswer) {
+                selectedOptionElement.classList.add('correct');
+                feedbackMessage.innerHTML = '✅ Parabéns! Resposta Correta!';
+            } else {
+                selectedOptionElement.classList.add('incorrect');
+                feedbackMessage.innerHTML = '❌ Ops! Resposta Incorreta. A correta está destacada em verde.';
+                
+                // Destaca a resposta correta para aprendizado
+                options.forEach(opt => {
+                    if (opt.getAttribute('data-value') === correctAnswer) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+            
+            // Garante que todas as opções respondidas percam o cursor de clique
+            options.forEach(opt => {
+                 opt.removeEventListener('click', optionClickHandler);
+            });
+
+
+            // Mostra o botão Próximo, a menos que seja o último slide
+            nextBtn.style.visibility = 'visible';
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+        
+        // Função Handler para o clique na opção
+        const optionClickHandler = function() {
+            const slideElement = this.closest('.slide');
+            const selectedValue = this.getAttribute('data-value');
+            checkAnswer(slideElement, this, selectedValue);
+        };
+        
+        // Adiciona Listeners a todos os slides
+        slides.forEach(slide => {
+            const options = slide.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.addEventListener('click', optionClickHandler);
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 08: Abrindo e Fechando Programas</title>
+    <style>
+        /* ================================================= */
+        /* ESTILOS CSS DA AULA (LAYOUT ESCURO E CORRIGIDO)   */
+        /* ================================================= */
+        :root {
+            --cor-principal: #035730; /* Verde do painel */
+            --cor-secundaria: #009688; /* Verde Água para destaque */
+            --cor-fundo-escuro: #121212; /* Fundo principal escuro */
+            --cor-cartao-claro: #1e1e1e; /* Fundo dos slides/cartões */
+            --cor-texto-claro: #e0e0e0; /* Cor do texto em fundo escuro */
+            --cor-sucesso: #4CAF50; 
+            --cor-erro: #F44336;
+            --tamanho-titulo: 2.2em;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--cor-fundo-escuro);
+            color: var(--cor-texto-claro);
+            height: 100vh;
+            overflow: hidden; /* Impede o scroll principal da página */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ------------------ CABEÇALHO DA AULA ------------------ */
+        .aula-header {
+            background-color: var(--cor-principal);
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .aula-header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        /* ------------------ CONTEÚDO DOS SLIDES ------------------ */
+        .content-area {
+            flex-grow: 1;
+            display: grid; 
+            padding: 20px;
+            overflow: hidden; 
+        }
+
+        .slide {
+            grid-area: 1 / 1;
+            visibility: hidden; 
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            
+            background: var(--cor-cartao-claro); 
+            color: var(--cor-texto-claro);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 40px;
+            overflow-y: auto; /* Permite scroll apenas dentro do slide */
+        }
+
+        .slide.active {
+            visibility: visible;
+            opacity: 1; 
+        }
+
+        .slide-image-container {
+            flex: 1;
+            text-align: center;
+        }
+
+        .slide-image {
+            max-width: 90%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .slide-text-container {
+            flex: 2;
+        }
+
+        .slide-text-container h2 {
+            color: var(--cor-secundaria);
+            font-size: var(--tamanho-titulo);
+            border-bottom: 3px solid var(--cor-secundaria);
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+
+        .slide-text-container p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            text-align: justify;
+        }
+        
+        /* Estilo do botão de quiz no slide */
+        #quizLink {
+            font-size: 1.2em;
+            color: white !important; 
+            background-color: var(--cor-sucesso); 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            text-decoration: none; 
+            display: block;
+            width: fit-content;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+        #quizLink:hover {
+            background-color: #387c3a;
+        }
+
+        /* ------------------ CONTROLES DE NAVEGAÇÃO ------------------ */
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--cor-cartao-claro); 
+            border-top: 1px solid #333;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        /* EFEITOS DE HOVER E ACTIVE */
+        #prevBtn {
+            background-color: #343a40;
+            color: white;
+        }
+        #prevBtn:hover {
+            background-color: #495057;
+        }
+        #prevBtn:active {
+            transform: scale(0.98);
+        }
+
+        #nextBtn {
+            background-color: var(--cor-principal);
+            color: white;
+        }
+        #nextBtn:hover {
+            background-color: #046e3d;
+        }
+        #nextBtn:active {
+            transform: scale(0.98);
+        }
+
+        #prevBtn:disabled, #nextBtn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #readTextBtn:hover {
+            background-color: #00796b;
+        }
+
+        .info-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: bold;
+            color: var(--cor-secundaria);
+        }
+
+        /* ------------------ MODAL (QUIZ) ------------------ */
+        .modal {
+            display: none;
+            position: absolute; 
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            /* Configuração padrão de centralização */
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Garante que o modal apareça centralizado, forçando display: flex quando o JS chama */
+        .modal[style*="display: block"], 
+        .modal[style*="display: flex"] {
+            display: flex !important;
+        }
+
+        .modal-content {
+            background-color: #2e2e2e;
+            color: var(--cor-texto-claro);
+            margin: 0;
+            padding: 20px;
+            border: 1px solid #333;
+            width: 80%; 
+            max-width: 600px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .quiz-question h3 {
+            color: var(--cor-secundaria);
+        }
+        
+        .quiz-option {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .quiz-option:hover {
+            background-color: #444;
+        }
+
+        .quiz-option label {
+            display: block;
+            cursor: pointer;
+        }
+
+        .quiz-option.correct {
+            background-color: rgba(76, 175, 80, 0.3);
+            border-left: 5px solid var(--cor-sucesso);
+        }
+
+        .quiz-option.incorrect {
+            background-color: rgba(244, 67, 54, 0.3);
+            border-left: 5px solid var(--cor-erro);
+        }
+        
+        .close-btn {
+            color: var(--cor-texto-claro);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #ccc;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="aula-header">
+        <h1>Aula 08: Abrindo e Fechando Programas</h1>
+    </div>
+
+    <div class="content-area">
+
+        <div class="slide" id="slide-1">
+            <div class="slide-image-container">
+                <img src="imagens/aula8/slide1.jpg" alt="Vários ícones de programas" class="slide-image">
+            </div>
+       
+            <div class="slide-text-container">
+                <h2>O que é um Programa ou Aplicativo?</h2>
+                <p id="text-1">
+                    Um Programa (ou Aplicativo/App) é um conjunto de instruções que dizem ao computador o que fazer. Sua função é executar uma tarefa específica. Por exemplo, o Bloco de Notas é um programa para escrever textos simples; o Google Chrome é um programa para navegar na internet; e um jogo é um programa para entretenimento. Para começar a trabalhar, você precisa primeiro abrir o programa.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-2">
+            <div class="slide-image-container">
+                <img src="imagens/aula8/slide2.jpg" alt="Abrindo pelo Menu Iniciar" class="slide-image">
+            </div>
+            <div class="slide-text-container">
+        
+                <h2>Abrindo pelo Menu Iniciar</h2>
+                <p id="text-2">
+                    A forma mais confiável de abrir qualquer programa instalado é pelo Menu Iniciar. Você clica no ícone do Menu Iniciar (geralmente no canto inferior esquerdo) para abrir a lista completa de aplicativos. Os programas geralmente são organizados em ordem alfabética. Basta encontrar o nome do programa desejado e clicar uma única vez para que ele inicie e apareça na tela em uma nova janela.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-3">
+            <div class="slide-image-container">
+                <img src="imagens/aula8/slide3.jpg" alt="Atalhos na Barra de Tarefas" class="slide-image">
+            </div>
+            
+            <div class="slide-text-container">
+                <h2>Abertura Rápida (Atalhos e Barra)</h2>
+                <p id="text-3">
+                    Para programas que você usa com frequência, há maneiras mais rápidas. Se o programa tem um Atalho na Área de Trabalho, você o abre com um Clique Duplo. Se ele está fixado na Barra de Tarefas (na parte inferior), basta um único Clique Simples para iniciá-lo. Essas são as maneiras mais eficientes e rápidas de lançar seus aplicativos favoritos.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-4">
+            <div class="slide-image-container">
+                <img src="imagens/aula8/slide4.jpg" alt="Botão fechar X" class="slide-image">
+            </div>
+            <div class="slide-text-container">
+       
+                <h2>Fechando o Programa (O Botão X)</h2>
+                <p id="text-4">
+                    Quando terminar de usar um programa, é importante fechá-lo para liberar a memória do computador. O método padrão é clicar no botão Fechar, que é o ícone de X no canto superior direito da janela. Se você tiver feito alguma alteração no arquivo (como um texto), o programa geralmente perguntará se você deseja salvar antes de fechar. Sempre salve seu trabalho!
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-5">
+            <div class="slide-image-container">
+                <img src="imagens/aula8/slide5.jpg" alt="Gerenciador de Tarefas" class="slide-image">
+            </div>
+            <div class="slide-text-container">
+            
+                <h2>O Programa Travou! E agora?</h2>
+                <p id="text-5">
+                    Se um programa travar e o botão X não funcionar, use o Gerenciador de Tarefas. Você pode abri-lo pressionando as teclas Ctrl + Shift + Esc juntas. Na lista de programas abertos, clique no nome do programa travado e, em seguida, no botão Finalizar Tarefa. Isso força o encerramento do programa imediatamente, permitindo que o computador volte a funcionar normalmente.
+                </p>
+                <a href="#" id="quizLink" onclick="openQuizModal(event)">
+                    ✅ Iniciar Quiz e Testar Seus Conhecimentos!
+                </a>
+                <a href="atividade8.html" id="quizLink">
+                    🕹️ Iniciar Atividade de Correspondência
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-controls">
+        <button id="prevBtn" class="nav-button" disabled>« Anterior</button>
+        
+        <div class="info-controls">
+            <span id="slideCounter">1 de 5</span>
+            <button id="readTextBtn" title="Ouvir o texto atual">🔊 Ler Texto</button>
+        
+        </div>
+
+        <button id="nextBtn" class="nav-button">Próximo »</button>
+    </div>
+
+    <div id="quizModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeQuizModal()">&times;</span>
+            <h2>Quiz da Aula 08: Abrindo e Fechando Programas</h2>
+            <form id="quizForm">
+                
+          
+                <div class="quiz-question" data-question="1">
+                    <h3>1. Qual é o objetivo principal de um Programa (ou Aplicativo)?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="a"> A) Armazenar todos os arquivos da internet.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="b"> B) Apenas exibir o Desktop na tela.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="c"> C) Executar uma tarefa específica (como escrever ou navegar).</label></div>
+         
+                </div>
+
+                <div class="quiz-question" data-question="2">
+                    <h3>2. Qual é a forma mais confiável de encontrar e abrir a lista completa de todos os programas instalados?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q2" value="a"> A) Na Área de Trabalho.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q2" value="b"> B) No Menu Iniciar.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q2" value="c"> C) Clicando no botão direito do mouse.</label></div>
+         
+                </div>
+                
+                <div class="quiz-question" data-question="3">
+                    <h3>3. Qual botão na janela de um programa é o método padrão e seguro para encerrá-lo?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="a"> A) O botão Maximizar (quadrado).</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="b"> B) O botão Minimizar (traço).</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="c"> C) O botão Fechar (X).</label></div>
+             
+                </div>
+
+                <div class="quiz-question" data-question="4">
+                    <h3>4. Se um programa travar e você não conseguir fechá-lo pelo "X", qual ferramenta você pode usar para forçar o encerramento?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="a"> A) O Painel de Controle.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="b"> B) O Gerenciador de Tarefas.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="c"> C) A Barra de Tarefas.</label></div>
+                </div>
+                
+
+                <button type="button" id="quizSubmitBtn" onclick="submitQuiz()">Finalizar Quiz</button>
+                <div id="quizResult" style="margin-top: 20px; font-weight: bold;"></div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        // Variáveis de Controle
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        // RESPOSTAS CORRETAS DA AULA 08 (ABRINDO E FECHANDO PROGRAMAS)
+        const correctAnswers = { 'q1': 'c', 'q2': 'b', 'q3': 'c', 'q4': 'b' };
+        
+        let synth = window.speechSynthesis;
+        let isSpeaking = false;
+        
+        // =================================================
+        // FUNÇÕES DE NAVEGAÇÃO DOS SLIDES
+        // =================================================
+
+        function showSlide(index) {
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            if (index < 0) {
+                currentSlide = 0;
+            } else if (index >= totalSlides) {
+                currentSlide = totalSlides - 1;
+            } else {
+                currentSlide = index;
+            }
+
+            slides[currentSlide].classList.add('active');
+            document.getElementById('slideCounter').textContent = `${currentSlide + 1} de ${totalSlides}`;
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+
+            const quizLink = document.getElementById('quizLink');
+            if (quizLink) {
+                 quizLink.style.display = (currentSlide === totalSlides - 1) ?
+                'block' : 'none';
+            }
+
+            stopReading(); // Garante que a leitura pare ao mudar de slide
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        });
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        });
+        // Inicializa o primeiro slide
+        showSlide(0);
+
+        // =================================================
+        // FUNÇÕES DE LEITURA DE TEXTO
+        // =================================================
+        function readText() {
+            if (!synth) {
+                alert("A leitura de voz não está disponível no seu navegador.");
+                return;
+            }
+
+            if (isSpeaking) {
+                stopReading();
+                return;
+            }
+            
+            const textId = `text-${currentSlide + 1}`;
+            const textElement = document.getElementById(textId);
+            
+            if (textElement) {
+                synth.cancel();
+                const textToSpeak = textElement.textContent;
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                
+                utterance.lang = 'pt-BR';
+                utterance.rate = 0.9;
+                utterance.onstart = () => {
+                    isSpeaking = true;
+                    document.getElementById('readTextBtn').textContent = '⏹️ Parar Leitura';
+                };
+
+                utterance.onend = () => {
+                    isSpeaking = false;
+                    document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+                };
+                
+                try {
+                    synth.speak(utterance);
+                } catch (e) {
+                    console.error("Erro ao iniciar a leitura de voz:", e);
+                    alert("Não foi possível iniciar a leitura. Tente novamente.");
+                    isSpeaking = false;
+                    document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+                }
+            }
+        }
+
+        function stopReading() {
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            isSpeaking = false;
+            document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+        }
+
+        document.getElementById('readTextBtn').addEventListener('click', readText);
+
+        // =================================================
+        // FUNÇÕES DO QUIZ 
+        // =================================================
+        function openQuizModal(event) {
+            event.preventDefault();
+            stopReading();
+            document.getElementById('quizModal').style.display = 'flex';
+            document.getElementById('quizResult').textContent = '';
+            
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'incorrect');
+            });
+            document.getElementById('quizSubmitBtn').disabled = false;
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quizModal').style.display = 'none';
+        }
+        
+        function submitQuiz() {
+            const form = document.getElementById('quizForm');
+            let score = 0;
+            
+            const totalQuestions = Object.keys(correctAnswers).length; 
+            
+            document.getElementById('quizSubmitBtn').disabled = true;
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'incorrect');
+            });
+
+            for (let i = 1; i <= totalQuestions; i++) {
+                const questionName = `q${i}`;
+                const selectedElement = form.elements[questionName] ? form.elements[questionName].value : null;
+                const correctAnswer = correctAnswers[questionName];
+                const questionDiv = document.querySelector(`.quiz-question[data-question="${i}"]`);
+
+                const options = questionDiv.querySelectorAll('.quiz-option');
+
+                options.forEach(optionDiv => {
+                    const radio = optionDiv.querySelector(`input[name="${questionName}"]`);
+                    
+                    if (radio && radio.value === correctAnswer) {
+                        optionDiv.classList.add('correct');
+                    } else if (radio && radio.checked && radio.value !== correctAnswer) {
+                        optionDiv.classList.add('incorrect');
+                    }
+                });
+
+                if (selectedElement === correctAnswer) {
+                    score++;
+                }
+            }
+
+            const resultElement = document.getElementById('quizResult');
+            
+            if (score === totalQuestions) {
+                resultElement.innerHTML = `<span style="color: var(--cor-sucesso);">Parabéns! Você acertou todas (${score}/${totalQuestions})!</span> Você é um(a) gênio!`;
+            } else {
+                resultElement.innerHTML = `<span style="color: var(--cor-erro);">Você acertou ${score} de ${totalQuestions} perguntas.</span> Revise os slides para aprender mais!`;
+            }
+        }
+    </script>
+
+</body>
+</html>
