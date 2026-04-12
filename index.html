@@ -44,11 +44,11 @@
 
         if (user) {
           authButton.textContent = "Logout";
-          loadLessonStatuses(user.uid);
+          loadLessonStatuses();
         } else {
           authButton.textContent = "Login";
-          // Mantém os estados atuais carregados mesmo após logout.
-          // Não resetamos para poder visualizar as aulas liberadas.
+          // Carrega status do Firestore para visualização mesmo sem login
+          loadLessonStatuses();
         }
       }
 
@@ -75,14 +75,20 @@
       }
 
       // Carregar status das aulas do Firestore
-      async function loadLessonStatuses(userId) {
+      async function loadLessonStatuses(forceRefresh = false) {
         try {
           const statusDocRef = doc(db, "config", "aulasStatus");
-          const statusDoc = await getDoc(statusDocRef);
+          // Força busca de dados atualizados quando forceRefresh é true
+          const statusDoc = await getDoc(statusDocRef, { 
+            source: forceRefresh ? 'server' : 'default' 
+          });
           console.log("Documento aulasStatus existe:", statusDoc.exists());
+          console.log("Fonte dos dados:", forceRefresh ? "servidor (atualizado)" : "cache/padrão");
           if (statusDoc.exists()) {
             const statuses = statusDoc.data().lessonStatuses || {};
             console.log("Statuses carregados:", statuses);
+            // Salva no localStorage para persistência offline
+            localStorage.setItem("lessonStatuses", JSON.stringify(statuses));
             Object.keys(statuses).forEach((lesson) => {
               const button = document.getElementById(`status-${lesson}`);
               if (button) {
@@ -95,10 +101,32 @@
               }
             });
           } else {
-            console.log("Documento aulasStatus não existe");
+            console.log("Documento aulasStatus não existe, tentando localStorage");
+            // Tenta carregar do localStorage se Firestore não tiver dados
+            const savedStatuses = localStorage.getItem("lessonStatuses");
+            if (savedStatuses) {
+              const statuses = JSON.parse(savedStatuses);
+              Object.keys(statuses).forEach((lesson) => {
+                const button = document.getElementById(`status-${lesson}`);
+                if (button) {
+                  updateStatusButton(button, statuses[lesson]);
+                }
+              });
+            }
           }
         } catch (error) {
           console.error("Erro ao carregar statuses:", error);
+          // Em caso de erro, tenta carregar do localStorage
+          const savedStatuses = localStorage.getItem("lessonStatuses");
+          if (savedStatuses) {
+            const statuses = JSON.parse(savedStatuses);
+            Object.keys(statuses).forEach((lesson) => {
+              const button = document.getElementById(`status-${lesson}`);
+              if (button) {
+                updateStatusButton(button, statuses[lesson]);
+              }
+            });
+          }
         }
       }
 
@@ -151,6 +179,11 @@
             window.currentUser = null;
             localStorage.removeItem("userLoggedIn");
             localStorage.removeItem("userId");
+            // Recarrega status após logout com um pequeno delay para garantir
+            // que as mudanças mais recentes sejam refletidas do servidor
+            setTimeout(() => {
+              loadLessonStatuses(true); // força busca do servidor
+            }, 500);
           });
         } else {
           window.location.href = "login.html";
@@ -628,9 +661,7 @@
         boasVindas.classList.remove("hidden");
 
         // Recarregar status das aulas
-        if (window.currentUser) {
-          loadLessonStatuses(window.currentUser.uid);
-        }
+        loadLessonStatuses();
       };
 
       // Função extra para garantir que o iframe inicial não tenha conteúdo visível
@@ -644,9 +675,7 @@
         setInterval(() => {
           if (iframe.src === "about:blank" && lastSrc !== "about:blank") {
             console.log("Detectado retorno ao painel, recarregando status...");
-            if (window.currentUser) {
-              loadLessonStatuses(window.currentUser.uid);
-            }
+            loadLessonStatuses();
           }
           lastSrc = iframe.src;
         }, 500);
