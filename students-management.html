@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerenciamento de Alunos - Midi@tiva Educa+</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        min-height: 100vh;
+        color: #e2e8f0;
+      }
+
+      /* Header */
+      header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 20px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .header-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .logo {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(45deg, #ff6b6b, #feca57);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+      }
+
+      .logo-text {
+        color: white;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        color: white;
+      }
+
+      .user-name {
+        color: #feca57;
+        font-weight: bold;
+      }
+
+      .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 10px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+
+      .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateX(-5px);
+      }
+
+      /* Main Content */
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      .page-title {
+        font-size: 2.5em;
+        color: #feca57;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      .page-subtitle {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 40px;
+      }
+
+      /* Actions Section */
+      .actions-section {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .section-title {
+        font-size: 1.5em;
+        color: #feca57;
+        margin-bottom: 20px;
+      }
+
+      .add-student-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .form-group label {
+        margin-bottom: 5px;
+        color: #cbd5e1;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #e2e8f0;
+        font-size: 16px;
+      }
+
+      .form-group input::placeholder {
+        color: #94a3b8;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 16px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #ff6b6b, #feca57);
+        color: black;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+      }
+
+      .btn-success {
+        background: #51cf66;
+        color: white;
+      }
+
+      .btn-danger {
+        background: #ff6b6b;
+        color: white;
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
+
+      /* Students List */
+      .students-section {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .students-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      .students-table th,
+      .students-table td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .students-table th {
+        background: rgba(255, 255, 255, 0.05);
+        color: #feca57;
+        font-weight: bold;
+      }
+
+      .students-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .lesson-access-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .lesson-access-column {
+        overflow-x: auto;
+      }
+
+      .lesson-access-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 100%;
+      }
+
+      .lesson-access-table th,
+      .lesson-access-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        text-align: left;
+      }
+
+      .lesson-access-table th {
+        background: rgba(255, 255, 255, 0.08);
+        color: #feca57;
+        font-weight: 600;
+      }
+
+      .lesson-access-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .lesson-access-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-weight: 600;
+        min-width: 90px;
+      }
+
+      .lesson-access-status.active {
+        background: rgba(81, 207, 102, 0.12);
+        color: #51cf66;
+      }
+
+      .lesson-access-status.inactive {
+        background: rgba(255, 107, 107, 0.12);
+        color: #ff6b6b;
+      }
+
+      .lesson-access-action {
+        display: inline-flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .lesson-access-action .btn-small {
+        padding: 8px 14px;
+      }
+
+      .lesson-access-table .empty-state {
+        padding: 30px 0;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .lesson-access-table .empty-state-icon {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .lesson-access-column:first-child {
+        min-width: 0;
+      }
+
+      .students-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-small {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .empty-state-icon {
+        font-size: 3em;
+        margin-bottom: 20px;
+      }
+
+      /* Certificate Section */
+      .certificate-section {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-top: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .certificates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .certificate-card {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .certificate-card h4 {
+        color: #feca57;
+        margin-bottom: 10px;
+      }
+
+      .certificate-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+      }
+
+      /* Messages */
+      .message {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .message.success {
+        background: rgba(81, 207, 102, 0.2);
+        border: 1px solid rgba(81, 207, 102, 0.3);
+        color: #51cf66;
+      }
+
+      .message.error {
+        background: rgba(255, 107, 107, 0.2);
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        color: #ff6b6b;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .header-container {
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .add-student-form {
+          grid-template-columns: 1fr;
+        }
+
+        .students-table {
+          font-size: 14px;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="header-container">
+        <div class="logo-section">
+          <div class="logo">M+</div>
+          <div class="logo-text">Midi@tiva Educa+</div>
+        </div>
+        <div class="user-info">
+          <span class="user-name" id="user-name">Carregando...</span>
+          <a href="home.html" class="back-btn">← Voltar ao Painel</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <h1 class="page-title">Gerenciamento de Alunos</h1>
+      <p class="page-subtitle">
+        Adicione alunos e emita certificados de conclusão
+      </p>
+
+      <div id="message" class="message"></div>
+
+      <!-- Adicionar Aluno -->
+      <section class="actions-section">
+        <h2 class="section-title">📝 Adicionar Novo Aluno</h2>
+        <form class="add-student-form" id="add-student-form">
+          <div class="form-group">
+            <label for="student-name">Nome Completo:</label>
+            <input
+              type="text"
+              id="student-name"
+              required
+              placeholder="Nome do aluno"
+            />
+          </div>
+          <div class="form-group">
+            <label for="student-email">E-mail:</label>
+            <input
+              type="email"
+              id="student-email"
+              required
+              placeholder="email@exemplo.com"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Adicionar Aluno</button>
+        </form>
+      </section>
+
+      <!-- Lista de Alunos -->
+      <section class="students-section">
+        <h2 class="section-title">👥 Alunos Cadastrados</h2>
+        <div id="students-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">📚</div>
+            <p>Nenhum aluno cadastrado ainda.</p>
+            <p>Adicione seu primeiro aluno usando o formulário acima.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Controle de Acesso às Aulas -->
+      <section class="lesson-access-section">
+        <h2 class="section-title">📘 Controle de Acesso às Aulas</h2>
+        <div class="lesson-access-grid">
+          <div class="lesson-access-column">
+            <table class="lesson-access-table" id="lesson-access-table-left">
+              <thead>
+                <tr>
+                  <th>Aula</th>
+                  <th>Status</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="empty-state-row">
+                  <td colspan="3" class="empty-state">
+                    <div class="empty-state-icon">🔒</div>
+                    <p>Nenhum acesso de aula configurado ainda.</p>
+                    <p>
+                      Os acessos serão carregados a partir do campo
+                      <strong>LessonAccess</strong> do Firestore.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="lesson-access-column">
+            <table class="lesson-access-table" id="lesson-access-table-right">
+              <thead>
+                <tr>
+                  <th>Aula</th>
+                  <th>Status</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Emissão de Certificados -->
+      <section class="certificate-section">
+        <h2 class="section-title">🏆 Emitir Certificados</h2>
+        <div id="certificates-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">🎓</div>
+            <p>Nenhum aluno concluiu o curso ainda.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+        setDoc,
+        updateDoc,
+        arrayUnion,
+        arrayRemove,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+      // Configuração do Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyB60LaJaxphLZvb2c0T3t8T9DYTPgTXFL0",
+        authDomain: "infor-basic.firebaseapp.com",
+        projectId: "infor-basic",
+        storageBucket: "infor-basic.firebasestorage.app",
+        messagingSenderId: "152738530319",
+        appId: "1:152738530319:web:0c9644a18c6e340b2c8f7a",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      let currentUser = null;
+      let userData = null;
+
+      // Verificar autenticação
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        currentUser = user;
+
+        // Carregar dados do usuário
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            userData = userDoc.data();
+
+            // Verificar se é usuário institucional
+            if (userData.userType !== "institucional") {
+              showMessage(
+                "Acesso negado. Esta página é apenas para usuários institucionais.",
+                "error",
+              );
+              setTimeout(() => {
+                window.location.href = "home.html";
+              }, 2000);
+              return;
+            }
+
+            // Atualizar informações do usuário
+            document.getElementById("user-name").textContent =
+              userData.name || "Usuário";
+
+            // Carregar lista de alunos e acesso às aulas
+            await loadStudents();
+            await loadLessonAccess();
+            loadCertificates();
+          }
+        } catch (error) {
+          console.error("Erro ao carregar dados do usuário:", error);
+          showMessage("Erro ao carregar informações do usuário.", "error");
+        }
+      });
+
+      // Mostrar mensagem
+      function showMessage(text, type) {
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = text;
+        messageDiv.className = `message ${type}`;
+        messageDiv.style.display = "block";
+
+        setTimeout(() => {
+          messageDiv.style.display = "none";
+        }, 5000);
+      }
+
+      // Adicionar aluno
+      document
+        .getElementById("add-student-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const name = document.getElementById("student-name").value.trim();
+          const email = document.getElementById("student-email").value.trim();
+
+          if (!name || !email) {
+            showMessage("Preencha todos os campos.", "error");
+            return;
+          }
+
+          try {
+            const userDocRef = doc(db, "users", currentUser.uid);
+
+            // Adicionar aluno à lista
+            await updateDoc(userDocRef, {
+              students: arrayUnion({
+                id: Date.now().toString(),
+                name: name,
+                email: email,
+                addedAt: new Date().toISOString(),
+                completedLessons: 0,
+                totalLessons: 16, // 15 aulas + atividades
+                status: "active",
+              }),
+            });
+
+            showMessage("Aluno adicionado com sucesso!", "success");
+
+            // Limpar formulário
+            document.getElementById("add-student-form").reset();
+
+            // Recarregar dados atualizados
+            const updatedDoc = await getDoc(userDocRef);
+            if (updatedDoc.exists()) {
+              userData = updatedDoc.data();
+            }
+
+            // Recarregar lista e acesso às aulas
+            await loadStudents();
+            await loadLessonAccess();
+            loadCertificates();
+          } catch (error) {
+            console.error("Erro ao adicionar aluno:", error);
+            showMessage("Erro ao adicionar aluno. Tente novamente.", "error");
+          }
+        });
+
+      // Carregar lista de alunos
+      async function loadStudents() {
+        try {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            userData = userDoc.data();
+          }
+
+          if (userData && userData.students) {
+            const students = userData.students || [];
+            const studentsList = document.getElementById("students-list");
+
+            if (students.length === 0) {
+              studentsList.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <p>Nenhum aluno cadastrado ainda.</p>
+                <p>Adicione seu primeiro aluno usando o formulário acima.</p>
+              </div>
+            `;
+              return;
+            }
+
+            let html = `
+            <table class="students-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>E-mail</th>
+                  <th>Data de Cadastro</th>
+                  <th>Progresso</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+            students.forEach((student) => {
+              const progress = Math.round(
+                (student.completedLessons / student.totalLessons) * 100,
+              );
+              const addedDate = new Date(student.addedAt).toLocaleDateString(
+                "pt-BR",
+              );
+
+              html += `
+              <tr>
+                <td>${student.name}</td>
+                <td>${student.email}</td>
+                <td>${addedDate}</td>
+                <td>${progress}%</td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn btn-success btn-small" onclick="markAsCompleted('${student.id}')">
+                      Concluir Curso
+                    </button>
+                    <button class="btn btn-danger btn-small" onclick="removeStudent('${student.id}')">
+                      Remover
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+            });
+
+            html += "</tbody></table>";
+            studentsList.innerHTML = html;
+          }
+        } catch (error) {
+          console.error("Erro ao carregar alunos:", error);
+          showMessage("Erro ao carregar lista de alunos.", "error");
+        }
+      }
+
+      async function loadLessonAccess() {
+        try {
+          const leftTbody = document.querySelector(
+            "#lesson-access-table-left tbody",
+          );
+          const rightTbody = document.querySelector(
+            "#lesson-access-table-right tbody",
+          );
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            userData = userDoc.data();
+          }
+
+          const lessonAccess =
+            userData?.LessonAccess || userData?.lessonAccess || {};
+          const keys = Object.keys(lessonAccess);
+
+          if (!leftTbody || !rightTbody) return;
+
+          if (keys.length === 0) {
+            leftTbody.innerHTML = `
+              <tr class="empty-state-row">
+                <td colspan="3" class="empty-state">
+                  <div class="empty-state-icon">🔒</div>
+                  <p>Nenhum acesso de aula configurado ainda.</p>
+                  <p>Os acessos serão carregados a partir do campo <strong>LessonAccess</strong> do Firestore.</p>
+                </td>
+              </tr>
+            `;
+            rightTbody.innerHTML = "";
+            return;
+          }
+
+          const lessonLabels = {
+            aula1: "Aula 1",
+            aula2: "Aula 2",
+            aula3: "Aula 3",
+            aula4: "Aula 4",
+            aula5: "Aula 5",
+            aula6: "Aula 6",
+            aula7: "Aula 7",
+            aula8: "Aula 8",
+            aula9: "Aula 9",
+            aula10: "Aula 10",
+            aula11: "Aula 11",
+            aula12: "Aula 12",
+            aula13: "Aula 13",
+            aula14: "Aula 14",
+            aula15: "Aula 15",
+            atividades: "Atividades",
+          };
+
+          const sortedKeys = keys.sort((a, b) => {
+            const getOrder = (key) => {
+              if (key === "atividades") return 99;
+              const match = key.match(/\d+/);
+              return match ? Number(match[0]) : 100;
+            };
+            return getOrder(a) - getOrder(b);
+          });
+
+          const half = Math.ceil(sortedKeys.length / 2);
+          const leftKeys = sortedKeys.slice(0, half);
+          const rightKeys = sortedKeys.slice(half);
+
+          const renderRows = (lessonIds) =>
+            lessonIds
+              .map((lessonId) => {
+                const status = !!lessonAccess[lessonId];
+                const label = lessonLabels[lessonId] || lessonId;
+
+                return `
+                  <tr>
+                    <td>${label}</td>
+                    <td>
+                      <span class="lesson-access-status ${status ? "active" : "inactive"}">
+                        ${status ? "Liberado" : "Bloqueado"}
+                      </span>
+                    </td>
+                    <td class="lesson-access-action">
+                      <button class="btn btn-primary btn-small" onclick="toggleLessonAccess('${lessonId}')">
+                        ${status ? "Bloquear" : "Liberar"}
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              })
+              .join("");
+
+          leftTbody.innerHTML = renderRows(leftKeys);
+          rightTbody.innerHTML = renderRows(rightKeys);
+        } catch (error) {
+          console.error("Erro ao carregar acesso às aulas:", error);
+          showMessage("Erro ao carregar acesso às aulas.", "error");
+        }
+      }
+
+      window.toggleLessonAccess = async function (lessonId) {
+        try {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const lessonAccess =
+            userData?.LessonAccess || userData?.lessonAccess || {};
+          const currentValue = !!lessonAccess[lessonId];
+          const updatedAccess = {
+            ...(userData?.lessonAccess || {}),
+            ...(userData?.LessonAccess || {}),
+            [lessonId]: !currentValue,
+          };
+
+          await updateDoc(userDocRef, {
+            lessonAccess: updatedAccess,
+            LessonAccess: updatedAccess,
+          });
+
+          userData.lessonAccess = updatedAccess;
+          userData.LessonAccess = updatedAccess;
+
+          showMessage(
+            `Acesso da ${lessonId} ${!currentValue ? "liberado" : "bloqueado"} com sucesso!`,
+            "success",
+          );
+          await loadLessonAccess();
+        } catch (error) {
+          console.error("Erro ao atualizar acesso à aula:", error);
+          showMessage("Erro ao atualizar acesso à aula.", "error");
+        }
+      };
+
+      // Marcar aluno como concluído
+      window.markAsCompleted = async function (studentId) {
+        if (
+          !confirm("Tem certeza que deseja marcar este aluno como concluído?")
+        ) {
+          return;
+        }
+
+        try {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const students = userData.students || [];
+          const studentIndex = students.findIndex((s) => s.id === studentId);
+
+          if (studentIndex !== -1) {
+            students[studentIndex].completedLessons =
+              students[studentIndex].totalLessons;
+            students[studentIndex].completedAt = new Date().toISOString();
+            students[studentIndex].status = "completed";
+
+            await updateDoc(userDocRef, { students });
+
+            showMessage(
+              "Aluno marcado como concluído! Certificado disponível.",
+              "success",
+            );
+            loadStudents();
+            loadCertificates();
+          }
+        } catch (error) {
+          console.error("Erro ao marcar aluno como concluído:", error);
+          showMessage("Erro ao atualizar status do aluno.", "error");
+        }
+      };
+
+      // Remover aluno
+      window.removeStudent = async function (studentId) {
+        if (!confirm("Tem certeza que deseja remover este aluno?")) {
+          return;
+        }
+
+        try {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const students = userData.students || [];
+          const updatedStudents = students.filter((s) => s.id !== studentId);
+
+          await updateDoc(userDocRef, { students: updatedStudents });
+
+          userData.students = updatedStudents;
+
+          showMessage("Aluno removido com sucesso!", "success");
+          await loadStudents();
+          loadLessonAccess();
+          loadCertificates();
+        } catch (error) {
+          console.error("Erro ao remover aluno:", error);
+          showMessage("Erro ao remover aluno.", "error");
+        }
+      };
+
+      // Carregar certificados
+      async function loadCertificates() {
+        try {
+          const students = userData.students || [];
+          const completedStudents = students.filter(
+            (s) => s.status === "completed",
+          );
+          const certificatesList = document.getElementById("certificates-list");
+
+          if (completedStudents.length === 0) {
+            certificatesList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🎓</div>
+              <p>Nenhum aluno concluiu o curso ainda.</p>
+            </div>
+          `;
+            return;
+          }
+
+          let html = '<div class="certificates-grid">';
+
+          completedStudents.forEach((student) => {
+            const completedDate = new Date(
+              student.completedAt,
+            ).toLocaleDateString("pt-BR");
+
+            html += `
+            <div class="certificate-card">
+              <h4>🏆 Certificado de Conclusão</h4>
+              <p><strong>Aluno:</strong> ${student.name}</p>
+              <p><strong>E-mail:</strong> ${student.email}</p>
+              <p><strong>Conclusão:</strong> ${completedDate}</p>
+              <div class="certificate-info">
+                <span>Status: Emitido</span>
+                <button class="btn btn-secondary btn-small" onclick="downloadCertificate('${student.id}')">
+                  📥 Baixar
+                </button>
+              </div>
+            </div>
+          `;
+          });
+
+          html += "</div>";
+          certificatesList.innerHTML = html;
+        } catch (error) {
+          console.error("Erro ao carregar certificados:", error);
+        }
+      }
+
+      // Download do certificado (simulação)
+      window.downloadCertificate = function (studentId) {
+        const students = userData.students || [];
+        const student = students.find((s) => s.id === studentId);
+
+        if (student) {
+          // Simular download do certificado
+          showMessage(
+            `Preparando certificado para ${student.name}...`,
+            "success",
+          );
+
+          // Aqui você implementaria a geração real do PDF
+          setTimeout(() => {
+            showMessage("Certificado baixado com sucesso!", "success");
+          }, 2000);
+        }
+      };
+
+      // Carregar certificados ao iniciar
+      setTimeout(() => {
+        if (userData) {
+          loadCertificates();
+        }
+      }, 1000);
+    </script>
+  </body>
+</html>

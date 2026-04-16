@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aula 08: Abrindo e Fechando Programas</title>
+    
+    <!-- Scripts do ImageManager Híbrido -->
+    <script src="imageManager_hybrid.js"></script>
+    
     <style>
         /* ================================================= */
         /* ESTILOS CSS DA AULA (LAYOUT ESCURO E CORRIGIDO)   */
@@ -121,6 +125,7 @@
             transition: background-color 0.3s;
             text-align: center;
         }
+
         #quizLink:hover {
             background-color: #387c3a;
         }
@@ -150,9 +155,11 @@
             background-color: #343a40;
             color: white;
         }
+
         #prevBtn:hover {
             background-color: #495057;
         }
+
         #prevBtn:active {
             transform: scale(0.98);
         }
@@ -161,14 +168,17 @@
             background-color: var(--cor-principal);
             color: white;
         }
+
         #nextBtn:hover {
             background-color: #046e3d;
         }
+
         #nextBtn:active {
             transform: scale(0.98);
         }
 
-        #prevBtn:disabled, #nextBtn:disabled {
+        #prevBtn:disabled,
+        #nextBtn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
             transform: none;
@@ -216,7 +226,7 @@
             width: 80%; 
             max-width: 600px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -268,6 +278,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="aula-header">
@@ -278,7 +289,7 @@
 
         <div class="slide" id="slide-1">
             <div class="slide-image-container">
-                <img src="imagens/aula8/slide1.jpg" alt="Vários ícones de programas" class="slide-image">
+                <img id="slide-1-image" alt="Vários ícones de programas" class="slide-image">
             </div>
        
             <div class="slide-text-container">
@@ -291,7 +302,7 @@
 
         <div class="slide" id="slide-2">
             <div class="slide-image-container">
-                <img src="imagens/aula8/slide2.jpg" alt="Abrindo pelo Menu Iniciar" class="slide-image">
+                <img id="slide-2-image" alt="Abrindo pelo Menu Iniciar" class="slide-image">
             </div>
             <div class="slide-text-container">
         
@@ -304,7 +315,7 @@
 
         <div class="slide" id="slide-3">
             <div class="slide-image-container">
-                <img src="imagens/aula8/slide3.jpg" alt="Atalhos na Barra de Tarefas" class="slide-image">
+                <img id="slide-3-image" alt="Atalhos na Barra de Tarefas" class="slide-image">
             </div>
             
             <div class="slide-text-container">
@@ -317,7 +328,7 @@
 
         <div class="slide" id="slide-4">
             <div class="slide-image-container">
-                <img src="imagens/aula8/slide4.jpg" alt="Botão fechar X" class="slide-image">
+                <img id="slide-4-image" alt="Botão fechar X" class="slide-image">
             </div>
             <div class="slide-text-container">
        
@@ -330,7 +341,7 @@
 
         <div class="slide" id="slide-5">
             <div class="slide-image-container">
-                <img src="imagens/aula8/slide5.jpg" alt="Gerenciador de Tarefas" class="slide-image">
+                <img id="slide-5-image" alt="Gerenciador de Tarefas" class="slide-image">
             </div>
             <div class="slide-text-container">
             
@@ -339,25 +350,25 @@
                     Se um programa travar e o botão X não funcionar, use o Gerenciador de Tarefas. Você pode abri-lo pressionando as teclas Ctrl + Shift + Esc juntas. Na lista de programas abertos, clique no nome do programa travado e, em seguida, no botão Finalizar Tarefa. Isso força o encerramento do programa imediatamente, permitindo que o computador volte a funcionar normalmente.
                 </p>
                 <a href="#" id="quizLink" onclick="openQuizModal(event)">
-                    ✅ Iniciar Quiz e Testar Seus Conhecimentos!
+                    \u2705 Iniciar Quiz e Testar Seus Conhecimentos!
                 </a>
                 <a href="atividade8.html" id="quizLink">
-                    🕹️ Iniciar Atividade de Correspondência
+                    \ud83c\udfae Iniciar Atividade de Correspondência
                 </a>
             </div>
         </div>
     </div>
 
     <div class="navigation-controls">
-        <button id="prevBtn" class="nav-button" disabled>« Anterior</button>
+        <button id="prevBtn" class="nav-button" disabled>\u00ab Anterior</button>
         
         <div class="info-controls">
             <span id="slideCounter">1 de 5</span>
-            <button id="readTextBtn" title="Ouvir o texto atual">🔊 Ler Texto</button>
+            <button id="readTextBtn" title="Ouvir o texto atual">\ud83d\udd0a Ler Texto</button>
         
         </div>
 
-        <button id="nextBtn" class="nav-button">Próximo »</button>
+        <button id="nextBtn" class="nav-button">Pr\u00f3ximo \u00bb</button>
     </div>
 
     <div id="quizModal" class="modal" style="display: none;">
@@ -365,39 +376,52 @@
             <span class="close-btn" onclick="closeQuizModal()">&times;</span>
             <h2>Quiz da Aula 08: Abrindo e Fechando Programas</h2>
             <form id="quizForm">
-                
+
           
                 <div class="quiz-question" data-question="1">
-                    <h3>1. Qual é o objetivo principal de um Programa (ou Aplicativo)?</h3>
-                    <div class="quiz-option"><label><input type="radio" name="q1" value="a"> A) Armazenar todos os arquivos da internet.</label></div>
-                    <div class="quiz-option"><label><input type="radio" name="q1" value="b"> B) Apenas exibir o Desktop na tela.</label></div>
-                    <div class="quiz-option"><label><input type="radio" name="q1" value="c"> C) Executar uma tarefa específica (como escrever ou navegar).</label></div>
-         
+                    <h3>1. Qual \u00e9 o objetivo principal de um Programa (ou Aplicativo)?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="a"> A) Armazenar todos os 
+                            arquivos da internet.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="b"> B) Apenas exibir o Desktop
+                            na tela.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q1" value="c"> C) Executar uma tarefa
+                            espec\u00edfica (como escrever ou navegar).</label></div>
+
                 </div>
 
                 <div class="quiz-question" data-question="2">
-                    <h3>2. Qual é a forma mais confiável de encontrar e abrir a lista completa de todos os programas instalados?</h3>
-                    <div class="quiz-option"><label><input type="radio" name="q2" value="a"> A) Na Área de Trabalho.</label></div>
+                    <h3>2. Qual \u00e9 a forma mais confi\u00e1vel de encontrar e abrir a lista completa de todos os programas 
+                        instalados?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q2" value="a"> A) Na \u00c1rea de
+                            Trabalho.</label></div>
                     <div class="quiz-option"><label><input type="radio" name="q2" value="b"> B) No Menu Iniciar.</label></div>
-                    <div class="quiz-option"><label><input type="radio" name="q2" value="c"> C) Clicando no botão direito do mouse.</label></div>
-         
+                    <div class="quiz-option"><label><input type="radio" name="q2" value="c"> C) Clicando no bot\u00e3o
+                            direito do mouse.</label></div>
+
                 </div>
-                
+
                 <div class="quiz-question" data-question="3">
-                    <h3>3. Qual botão na janela de um programa é o método padrão e seguro para encerrá-lo?</h3>
-                    <div class="quiz-option"><label><input type="radio" name="q3" value="a"> A) O botão Maximizar (quadrado).</label></div>
-                    <div class="quiz-option"><label><input type="radio" name="q3" value="b"> B) O botão Minimizar (traço).</label></div>
-                    <div class="quiz-option"><label><input type="radio" name="q3" value="c"> C) O botão Fechar (X).</label></div>
-             
+                    <h3>3. Qual bot\u00e3o na janela de um programa \u00e9 o m\u00e9todo padr\u00e3o e seguro para encerr\u00e1-lo?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="a"> A) O bot\u00e3o Maximizar
+                            (quadrado).</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="b"> B) O bot\u00e3o Minimizar
+                            (tra\u00e7o).</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q3" value="c"> C) O bot\u00e3o Fechar
+                            (X).</label></div>
+
                 </div>
 
                 <div class="quiz-question" data-question="4">
-                    <h3>4. Se um programa travar e você não conseguir fechá-lo pelo "X", qual ferramenta você pode usar para forçar o encerramento?</h3>
-                    <div class="quiz-option"><label><input type="radio" name="q4" value="a"> A) O Painel de Controle.</label></div>
-                    <div class="quiz-option"><label><input type="radio" name="q4" value="b"> B) O Gerenciador de Tarefas.</label></div>
-                    <div class="quiz-option"><label><input type="radio" name="q4" value="c"> C) A Barra de Tarefas.</label></div>
+                    <h3>4. Se um programa travar e voc\u00ea n\u00e3o conseguir fech\u00e1-lo pelo "X", qual ferramenta voc\u00ea pode usar 
+                        para for\u00e7ar o encerramento?</h3>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="a"> A) O Painel de
+                            Controle.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="b"> B) O Gerenciador de
+                            Tarefas.</label></div>
+                    <div class="quiz-option"><label><input type="radio" name="q4" value="c"> C) A Barra de
+                            Tarefas.</label></div>
+
                 </div>
-                
 
                 <button type="button" id="quizSubmitBtn" onclick="submitQuiz()">Finalizar Quiz</button>
                 <div id="quizResult" style="margin-top: 20px; font-weight: bold;"></div>
@@ -405,9 +429,8 @@
         </div>
     </div>
 
-
     <script>
-        // Variáveis de Controle
+        // Vari\u00e1veis de Controle
         let currentSlide = 0;
         const slides = document.querySelectorAll('.slide');
         const totalSlides = slides.length;
@@ -417,9 +440,9 @@
         
         let synth = window.speechSynthesis;
         let isSpeaking = false;
-        
+
         // =================================================
-        // FUNÇÕES DE NAVEGAÇÃO DOS SLIDES
+        // FUN\u00c7\u00d5ES DE NAVEGA\u00c7\u00c3O DOS SLIDES
         // =================================================
 
         function showSlide(index) {
@@ -462,11 +485,11 @@
         showSlide(0);
 
         // =================================================
-        // FUNÇÕES DE LEITURA DE TEXTO
+        // FUN\u00c7\u00d5ES DE LEITURA DE TEXTO
         // =================================================
         function readText() {
             if (!synth) {
-                alert("A leitura de voz não está disponível no seu navegador.");
+                alert("A leitura de voz n\u00e3o est\u00e1 dispon\u00edvel no seu navegador.");
                 return;
             }
 
@@ -487,21 +510,21 @@
                 utterance.rate = 0.9;
                 utterance.onstart = () => {
                     isSpeaking = true;
-                    document.getElementById('readTextBtn').textContent = '⏹️ Parar Leitura';
+                    document.getElementById('readTextBtn').textContent = '\u23f9\ufe0f Parar Leitura';
                 };
 
                 utterance.onend = () => {
                     isSpeaking = false;
-                    document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+                    document.getElementById('readTextBtn').textContent = '\ud83d\udd0a Ler Texto';
                 };
                 
                 try {
                     synth.speak(utterance);
                 } catch (e) {
                     console.error("Erro ao iniciar a leitura de voz:", e);
-                    alert("Não foi possível iniciar a leitura. Tente novamente.");
+                    alert("N\u00e3o foi poss\u00edvel iniciar a leitura. Tente novamente.");
                     isSpeaking = false;
-                    document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+                    document.getElementById('readTextBtn').textContent = '\ud83d\udd0a Ler Texto';
                 }
             }
         }
@@ -511,13 +534,13 @@
                 synth.cancel();
             }
             isSpeaking = false;
-            document.getElementById('readTextBtn').textContent = '🔊 Ler Texto';
+            document.getElementById('readTextBtn').textContent = '\ud83d\udd0a Ler Texto';
         }
 
         document.getElementById('readTextBtn').addEventListener('click', readText);
 
         // =================================================
-        // FUNÇÕES DO QUIZ 
+        // FUN\u00c7\u00d5ES DO QUIZ 
         // =================================================
         function openQuizModal(event) {
             event.preventDefault();
@@ -572,12 +595,13 @@
             const resultElement = document.getElementById('quizResult');
             
             if (score === totalQuestions) {
-                resultElement.innerHTML = `<span style="color: var(--cor-sucesso);">Parabéns! Você acertou todas (${score}/${totalQuestions})!</span> Você é um(a) gênio!`;
+                resultElement.innerHTML = `<span style="color: var(--cor-sucesso);">Parab\u00e9ns! Voc\u00ea acertou todas (${score}/${totalQuestions})!</span> Voc\u00ea \u00e9 um(a) g\u00eanio!`;
             } else {
-                resultElement.innerHTML = `<span style="color: var(--cor-erro);">Você acertou ${score} de ${totalQuestions} perguntas.</span> Revise os slides para aprender mais!`;
+                resultElement.innerHTML = `<span style="color: var(--cor-erro);">Voc\u00ea acertou ${score} de ${totalQuestions} perguntas.</span> Revise os slides para aprender mais!`;
             }
         }
     </script>
 
 </body>
+
 </html>

@@ -1,0 +1,1126 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Curso de Informática Básica</title>
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+        setDoc,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+      // Configuração do Firebase (substitua pelas suas credenciais)
+      const firebaseConfig = {
+        apiKey: "AIzaSyB60LaJaxphLZvb2c0T3t8T9DYTPgTXFL0",
+        authDomain: "infor-basic.firebaseapp.com",
+        projectId: "infor-basic",
+        storageBucket: "infor-basic.firebasestorage.app",
+        messagingSenderId: "152738530319",
+        appId: "1:152738530319:web:0c9644a18c6e340b2c8f7a",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      window.currentUser = null;
+      window.domReady = false;
+      window.pendingUser = null;
+      window.userData = null;
+
+      function handleAuthStateChanged(user) {
+        window.currentUser = user;
+
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        loadUserData();
+        loadLessonStatuses();
+      }
+
+      // Carregar dados do usuário do Firestore
+      async function loadUserData() {
+        if (!window.currentUser) return;
+
+        try {
+          const userDocRef = doc(db, "users", window.currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            window.userData = userDoc.data();
+            console.log("userData loaded:", window.userData);
+            updateUserInfo();
+          } else {
+            console.log("userData not found in Firestore");
+          }
+        } catch (error) {
+          console.error("Erro ao carregar dados do usuário:", error);
+        }
+      }
+
+      // Atualizar informações do usuário no header
+      function updateUserInfo() {
+        if (!window.userData) return;
+
+        const userTypeKey = (
+          window.userData.userType ||
+          window.userData.planType ||
+          ""
+        )
+          .toString()
+          .trim()
+          .toLowerCase();
+        const isAdmin =
+          userTypeKey === "admin" || window.userData.isAdmin === true;
+        const isInstitutional =
+          userTypeKey === "institucional" ||
+          (!!window.userData.students &&
+            Array.isArray(window.userData.students));
+
+        const headerTitle = document.getElementById("header-title");
+        const userInfo = document.getElementById("user-info");
+        const userName = document.getElementById("user-name");
+        const userType = document.getElementById("user-type");
+        const studentsBtn = document.getElementById("students-btn");
+        const adminBtn = document.getElementById("admin-btn");
+        const authButton = document.getElementById("auth-button");
+
+        if (headerTitle) {
+          headerTitle.textContent = window.userData.name || "Usuário";
+        }
+
+        if (authButton) {
+          authButton.textContent = "Logout";
+          authButton.title = "Logout";
+        }
+
+        if (studentsBtn) {
+          if (isInstitutional) {
+            studentsBtn.style.removeProperty("display");
+            studentsBtn.style.display = "inline-flex";
+          } else {
+            studentsBtn.style.display = "none";
+          }
+        }
+
+        if (adminBtn) {
+          if (isAdmin) {
+            adminBtn.style.removeProperty("display");
+            adminBtn.style.display = "inline-flex";
+          } else {
+            adminBtn.style.display = "none";
+          }
+        }
+
+        if (userInfo && userName) {
+          userName.textContent = window.userData.name || "Usuário";
+
+          if (userType) {
+            const userTypeText =
+              userTypeKey === "pessoal"
+                ? "Pessoal"
+                : isInstitutional
+                  ? "Institucional"
+                  : isAdmin
+                    ? "Administrador"
+                    : "";
+            userType.textContent = userTypeText;
+          }
+
+          const dashboardRoute =
+            window.userData.dashboardPage ||
+            (isAdmin
+              ? "admin-dashboard.html"
+              : isInstitutional
+                ? "students-management.html"
+                : "");
+          window.dashboardRoute = dashboardRoute;
+
+          console.log("updateUserInfo", {
+            userTypeKey,
+            isAdmin,
+            isInstitutional,
+            dashboardRoute,
+            userTypeValue: window.userData.userType,
+            userData: window.userData,
+          });
+
+          if (userInfo) {
+            userInfo.style.display = "flex";
+          }
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        window.domReady = true;
+        if (window.pendingUser !== null) {
+          handleAuthStateChanged(window.pendingUser);
+          window.pendingUser = null;
+        }
+      });
+
+      onAuthStateChanged(auth, (user) => {
+        if (window.domReady) {
+          handleAuthStateChanged(user);
+        } else {
+          window.pendingUser = user;
+        }
+      });
+
+      function updateStatusButton(button, status) {
+        button.textContent = status ? "Ativo" : "Pendente";
+        button.classList.toggle("active", status);
+        button.style.backgroundColor = status ? "#51cf66" : "#ff6b6b";
+      }
+
+      // Carregar status das aulas do Firestore
+      async function loadLessonStatuses(forceRefresh = false) {
+        console.log(
+          `[loadLessonStatuses] Iniciando carregamento. forceRefresh: ${forceRefresh}`,
+        );
+        try {
+          // Se for o usuário spalenc2@gmail.com, todas as aulas ficam ativas
+          if (
+            window.userData &&
+            window.userData.email === "spalenc2@gmail.com"
+          ) {
+            const allActiveStatuses = {
+              aula1: true,
+              aula2: true,
+              aula3: true,
+              aula4: true,
+              aula5: true,
+              aula6: true,
+              aula7: true,
+              aula8: true,
+              aula9: true,
+              aula10: true,
+              aula11: true,
+              aula12: true,
+              aula13: true,
+              aula14: true,
+              aula15: true,
+              atividades: true,
+            };
+            localStorage.setItem(
+              "lessonStatuses",
+              JSON.stringify(allActiveStatuses),
+            );
+            Object.keys(allActiveStatuses).forEach((lesson) => {
+              const button = document.getElementById(`status-${lesson}`);
+              if (button) {
+                updateStatusButton(button, true);
+              }
+            });
+            console.log(
+              "[loadLessonStatuses] Todas as aulas ativadas para o proprietário",
+            );
+            return;
+          }
+
+          const statusDocRef = doc(db, "config", "aulasStatus");
+          // Força busca de dados atualizados quando forceRefresh é true
+          const statusDoc = await getDoc(statusDocRef, {
+            source: forceRefresh ? "server" : "default",
+          });
+          console.log("Documento aulasStatus existe:", statusDoc.exists());
+          console.log(
+            "Fonte dos dados:",
+            forceRefresh ? "servidor (atualizado)" : "cache/padrão",
+          );
+
+          if (statusDoc.exists()) {
+            const statuses = statusDoc.data().lessonStatuses || {};
+            console.log("Statuses carregados do Firestore:", statuses);
+            // Salva no localStorage para persistência offline
+            localStorage.setItem("lessonStatuses", JSON.stringify(statuses));
+            console.log("Statuses salvos no localStorage");
+
+            let updatedCount = 0;
+            Object.keys(statuses).forEach((lesson) => {
+              const button = document.getElementById(`status-${lesson}`);
+              if (button) {
+                const oldStatus = button.classList.contains("active");
+                updateStatusButton(button, statuses[lesson]);
+                const newStatus = button.classList.contains("active");
+                console.log(
+                  `Botão ${lesson}: ${oldStatus ? "Ativo" : "Pendente"} -> ${newStatus ? "Ativo" : "Pendente"}`,
+                );
+                updatedCount++;
+              } else {
+                console.log(`Botão status-${lesson} não encontrado`);
+              }
+            });
+            console.log(
+              `[loadLessonStatuses] ${updatedCount} botões atualizados com sucesso`,
+            );
+          } else {
+            console.log(
+              "Documento aulasStatus não existe, tentando localStorage",
+            );
+            // Tenta carregar do localStorage se Firestore não tiver dados
+            const savedStatuses = localStorage.getItem("lessonStatuses");
+            if (savedStatuses) {
+              const statuses = JSON.parse(savedStatuses);
+              console.log("Statuses carregados do localStorage:", statuses);
+              Object.keys(statuses).forEach((lesson) => {
+                const button = document.getElementById(`status-${lesson}`);
+                if (button) {
+                  updateStatusButton(button, statuses[lesson]);
+                }
+              });
+            } else {
+              console.log("Nenhum status encontrado no localStorage");
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao carregar statuses:", error);
+          // Em caso de erro, tenta carregar do localStorage
+          const savedStatuses = localStorage.getItem("lessonStatuses");
+          if (savedStatuses) {
+            const statuses = JSON.parse(savedStatuses);
+            console.log(
+              "Statuses carregados do localStorage (fallback):",
+              statuses,
+            );
+            Object.keys(statuses).forEach((lesson) => {
+              const button = document.getElementById(`status-${lesson}`);
+              if (button) {
+                updateStatusButton(button, statuses[lesson]);
+              }
+            });
+          }
+        }
+      }
+
+      // Resetar status quando não logado
+      function resetLessonStatuses() {
+        const buttons = document.querySelectorAll(".status-toggle");
+        buttons.forEach((button) => updateStatusButton(button, false));
+      }
+
+      // Toggle status da aula
+      window.toggleStatus = async function (lesson) {
+        console.log(`[toggleStatus] Iniciando toggle para aula: ${lesson}`);
+
+        if (!window.currentUser) {
+          console.log("[toggleStatus] Usuário não logado, abortando");
+          alert("Você precisa estar logado para alterar o status das aulas.");
+          return;
+        }
+
+        const button = document.getElementById(`status-${lesson}`);
+        if (!button) {
+          console.error(
+            `[toggleStatus] Botão de status não encontrado para ${lesson}`,
+          );
+          return;
+        }
+
+        const isActive = button.classList.contains("active");
+        const newStatus = !isActive;
+        console.log(
+          `[toggleStatus] ${lesson}: ${isActive ? "Ativo" : "Pendente"} -> ${newStatus ? "Ativo" : "Pendente"}`,
+        );
+
+        // Atualiza imediatamente no UI
+        updateStatusButton(button, newStatus);
+        console.log(`[toggleStatus] Botão atualizado no UI`);
+
+        // Salvar no Firestore no documento permitido pelas regras
+        try {
+          console.log(`[toggleStatus] Salvando no Firestore...`);
+          const statusDocRef = doc(db, "config", "aulasStatus");
+          const statusDoc = await getDoc(statusDocRef);
+          const statuses = statusDoc.exists()
+            ? statusDoc.data().lessonStatuses || {}
+            : {};
+          statuses[lesson] = newStatus;
+
+          console.log(`[toggleStatus] Enviando para Firestore:`, statuses);
+          await setDoc(
+            statusDocRef,
+            { lessonStatuses: statuses },
+            { merge: true },
+          );
+          console.log(
+            `[toggleStatus] Status ${lesson} salvo com sucesso no Firestore como: ${newStatus}`,
+          );
+
+          // Também atualiza localStorage
+          localStorage.setItem("lessonStatuses", JSON.stringify(statuses));
+          console.log(`[toggleStatus] Status também salvo no localStorage`);
+        } catch (error) {
+          console.error("[toggleStatus] Erro ao salvar status:", error);
+          // Reverte o estado do botão se falhar ao salvar
+          updateStatusButton(button, isActive);
+          console.log(
+            `[toggleStatus] Estado do botão revertido devido ao erro`,
+          );
+        }
+      };
+
+      // Toggle login/logout
+      window.toggleAuth = function () {
+        if (window.currentUser) {
+          signOut(auth).then(() => {
+            window.currentUser = null;
+            localStorage.removeItem("userLoggedIn");
+            localStorage.removeItem("userId");
+            // Não precisa chamar loadLessonStatuses aqui, pois onAuthStateChanged vai chamar
+            // Adicionando um pequeno delay para garantir que o Firebase tenha tempo de processar
+            setTimeout(() => {
+              console.log(
+                "Logout completado, aguardando atualização automática do status",
+              );
+            }, 100);
+          });
+        } else {
+          window.location.href = "login.html";
+        }
+      };
+
+      // Função para alternar tela cheia
+      window.toggleFullscreen = function () {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch((err) => {
+            console.log("Erro ao tentar entrar em tela cheia:", err);
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      };
+
+      // Função para ir para a tela inicial
+      window.goToHome = function () {
+        window.location.href = "index.html";
+      };
+
+      // Função para gerenciar alunos (usuários institucionais)
+      window.manageStudents = function () {
+        window.location.href = "students-management.html";
+      };
+
+      // Função para ir ao painel administrativo
+      window.goToAdmin = function () {
+        window.location.href = "admin-dashboard.html";
+      };
+
+      // Função para ir ao painel definido no Firestore
+      window.goToDashboard = function () {
+        const route = window.dashboardRoute || "";
+        if (route) {
+          window.location.href = route;
+        }
+      };
+
+      // Adicionar suporte para tecla F11
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "F11") {
+          e.preventDefault();
+          window.toggleFullscreen();
+        }
+      });
+    </script>
+    <style>
+      /* ================================================= */
+      /* ESTILOS CSS                       */
+      /* ================================================= */
+
+      :root {
+        --cor-verde: #035730;
+        /* Cor padrão para cabeçalho e menu */
+        --largura-menu: 350px;
+        /* Aumentado para acomodar botões extras */
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        display: flex;
+        /* Permite posicionar o menu e o conteúdo */
+        height: 100vh;
+        /* Ocupa a altura total da viewport */
+        overflow: hidden;
+        /* Evita barras de rolagem desnecessárias no corpo */
+      }
+
+      /* Estilos das Seções */
+      .header-section {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+      }
+
+      .sidebar-section {
+        position: fixed;
+        top: 60px;
+        /* Abaixo do header */
+        left: 0;
+        width: var(--largura-menu);
+        height: calc(100vh - 60px);
+        z-index: 999;
+      }
+
+      .content-section {
+        margin-left: var(--largura-menu);
+        margin-top: 60px;
+        width: calc(100% - var(--largura-menu));
+        height: calc(100vh - 60px);
+        position: relative;
+      }
+
+      /* ------------------ CABEÇALHO ------------------ */
+      header {
+        width: 100%;
+        height: 60px;
+        background-color: var(--cor-verde);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        box-sizing: border-box;
+        /* Garante que o padding não aumente a largura */
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 20px;
+      }
+
+      .header-buttons {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .header-title {
+        flex: 1;
+        text-align: center;
+        color: #feca57;
+        font-weight: bold;
+        font-size: 1.1em;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 30%;
+        flex-shrink: 1;
+      }
+
+      .header-icon-btn {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        min-width: 40px;
+        height: 40px;
+        padding: 0 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+      }
+
+      .header-icon-btn:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+      }
+
+      .header-icon-btn:active {
+        transform: scale(0.95);
+      }
+
+      .logotipo {
+        display: flex;
+        align-items: center;
+      }
+
+      .logotipo .logo {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(45deg, #ff6b6b, #feca57);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        margin-right: 10px;
+      }
+
+      .logotipo p {
+        color: white;
+        font-weight: bold;
+        font-size: 1.1em;
+        margin: 0;
+      }
+
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        color: white;
+        margin-left: 20px;
+      }
+
+      .user-info #user-name {
+        font-weight: bold;
+        font-size: 1em;
+        color: #feca57;
+      }
+
+      .user-type {
+        font-size: 0.8em;
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-top: 2px;
+      }
+
+      header h1 {
+        font-size: 1.5em;
+        margin: 0;
+      }
+
+      .auth-button {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid white;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: background-color 0.2s;
+      }
+
+      .auth-button:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+
+      /* ------------------ MENU LATERAL ------------------ */
+      #menu-lateral {
+        width: 100%;
+        height: 100%;
+        /* Altura restante da tela */
+        background-color: var(--cor-verde);
+        color: white;
+        padding: 0;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #menu-lateral h2 {
+        text-align: center;
+        margin: 0;
+        padding: 20px 10px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        font-size: 1.3em;
+        flex-shrink: 0;
+        /* Impede que o título encolha */
+        position: sticky;
+        top: 0;
+        background-color: var(--cor-verde);
+        z-index: 10;
+      }
+
+      .menu-items-container {
+        flex: 1;
+        overflow-y: auto;
+        /* Apenas os itens rolam */
+        padding: 0 10px 20px;
+      }
+
+      /* Estilo personalizado da barra de rolagem */
+      .menu-items-container::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .menu-items-container::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+
+      .menu-items-container::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+      }
+
+      .menu-items-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .menu-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        gap: 5px;
+        /* Ajuste o espaçamento entre o botão da aula e o botão de status */
+        margin-bottom: 10px;
+      }
+
+      .menu-botao {
+        flex: 1;
+        padding: 10px 15px;
+        text-align: left;
+        border: none;
+        background-color: transparent;
+        color: white;
+        font-size: 1em;
+        cursor: pointer;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
+      }
+
+      .status-toggle {
+        width: 80px;
+        padding: 5px 10px;
+        margin-left: 0;
+        /* Removido margin para alinhar à esquerda */
+        background-color: #ff6b6b;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.8em;
+        transition: background-color 0.2s;
+      }
+
+      .menu-botao:hover {
+        background-color: rgba(192, 221, 25, 0.3);
+      }
+
+      .menu-botao:active {
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: scale(0.99);
+      }
+
+      .status-toggle.active {
+        background-color: #51cf66;
+      }
+
+      /* ------------------ CONTEÚDO PRINCIPAL ------------------ */
+      #conteudo-principal {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      /* ------------------ TELA DE BOAS-VINDAS ------------------ */
+      #boas-vindas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("./imagens/fundo-boas-vindas.jpg");
+        /* **IMPORTANTE: Mude para o caminho da sua imagem** */
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: white;
+        text-align: center;
+        z-index: 50;
+        /* Fica acima do iframe quando visível */
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      #boas-vindas.hidden {
+        opacity: 0;
+        pointer-events: none;
+        /* Permite clicar no iframe por baixo */
+        z-index: 1;
+      }
+
+      #boas-vindas-texto {
+        font-size: 2.5em;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        background-color: rgba(0, 0, 0, 0.4);
+        /* Fundo semi-transparente para destaque */
+        padding: 20px 40px;
+        border-radius: 10px;
+      }
+
+      /* ------------------ IFRAME ------------------ */
+      #iframe-aulas {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background-color: white;
+        /* Cor de fundo padrão para as páginas de aula */
+      }
+    </style>
+  </head>
+
+  <body>
+    <section class="header-section">
+      <header>
+        <div class="logo-container">
+          <div class="logotipo">
+            <div class="logo">M+</div>
+            <p>Midi@tiva Educa+</p>
+          </div>
+          <div class="header-title" id="header-title"></div>
+          <div class="header-buttons">
+            <button
+              id="students-btn"
+              class="header-icon-btn"
+              onclick="manageStudents()"
+              title="Gestão de Alunos"
+              style="display: none"
+            >
+              👥 Alunos
+            </button>
+            <button
+              id="fullscreen-btn"
+              class="header-icon-btn"
+              onclick="toggleFullscreen()"
+              title="Tela Cheia (F11)"
+            >
+              ⛶
+            </button>
+            <button
+              id="admin-btn"
+              class="header-icon-btn"
+              onclick="goToAdmin()"
+              title="Painel Administrativo"
+              style="display: none"
+            >
+              ⚙️ Admin
+            </button>
+            <button
+              id="home-btn"
+              class="header-icon-btn"
+              onclick="goToHome()"
+              title="Página Inicial"
+            >
+              🏠
+            </button>
+            <button
+              id="auth-button"
+              class="auth-button"
+              onclick="toggleAuth()"
+              title="Logout"
+              style="display: flex"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+    </section>
+
+    <section class="sidebar-section">
+      <nav id="menu-lateral">
+        <h2>Menu das Aulas</h2>
+        <div class="menu-items-container">
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula1.html')">
+              01: O Computador e Seus Amigos
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula1"
+              onclick="toggleStatus('aula1')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula2.html')">
+              02: O que é Hardware?
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula2"
+              onclick="toggleStatus('aula2')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula3.html')">
+              03: O que é Software?
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula3"
+              onclick="toggleStatus('aula3')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula4.html')">
+              04: Conhecendo o Sistema Operacional
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula4"
+              onclick="toggleStatus('aula4')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula5.html')">
+              05: Explorando a Área de Trabalho
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula5"
+              onclick="toggleStatus('aula5')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula6.html')">
+              06: Primeiros Passos com o Mouse
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula6"
+              onclick="toggleStatus('aula6')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula7.html')">
+              07: Usando o Teclado Mágico
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula7"
+              onclick="toggleStatus('aula7')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula8.html')">
+              08: Abrindo e Fechando Programas
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula8"
+              onclick="toggleStatus('aula8')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula9.html')">
+              09: Salvar e Encontrar Arquivos
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula9"
+              onclick="toggleStatus('aula9')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula10.html')">
+              10: O Mundo da Internet
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula10"
+              onclick="toggleStatus('aula10')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula11.html')">
+              11: Navegando com Segurança
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula11"
+              onclick="toggleStatus('aula11')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula12.html')">
+              12: Criando Textos no Editor
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula12"
+              onclick="toggleStatus('aula12')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula13.html')">
+              13: E-mail e Comunicação Digital
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula13"
+              onclick="toggleStatus('aula13')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula14.html')">
+              14: Jogos Educativos e Aplicativos
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula14"
+              onclick="toggleStatus('aula14')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button class="menu-botao" onclick="carregarAula('aula15.html')">
+              15: Manutenção e Cuidados com o PC
+            </button>
+            <button
+              class="status-toggle"
+              id="status-aula15"
+              onclick="toggleStatus('aula15')"
+            >
+              Pendente
+            </button>
+          </div>
+          <div class="menu-item">
+            <button
+              class="menu-botao"
+              onclick="carregarAula('atividades.html')"
+            >
+              Atividades Criativas
+            </button>
+            <button
+              class="status-toggle"
+              id="status-atividades"
+              onclick="toggleStatus('atividades')"
+            >
+              Pendente
+            </button>
+          </div>
+        </div>
+      </nav>
+    </section>
+
+    <section class="content-section">
+      <main id="conteudo-principal">
+        <div id="boas-vindas">
+          <span id="boas-vindas-texto"
+            >Bem-vindo à sua jornada no Mundo da Informática!</span
+          >
+        </div>
+
+        <iframe
+          id="iframe-aulas"
+          name="iframe-aulas"
+          src="about:blank"
+        ></iframe>
+      </main>
+    </section>
+
+    <script>
+      function carregarAula(urlDaAula) {
+        const iframe = document.getElementById("iframe-aulas");
+        const boasVindas = document.getElementById("boas-vindas");
+
+        // Verificar se a aula está ativa
+        const lesson = urlDaAula.replace(".html", "");
+        const button = document.getElementById(`status-${lesson}`);
+        console.log("carregarAula", {
+          urlDaAula,
+          lesson,
+          button,
+          currentUser: !!window.currentUser,
+        });
+        if (button && !button.classList.contains("active")) {
+          alert("Esta aula ainda não foi liberada. Contate o administrador.");
+          return;
+        }
+
+        // 1. Carrega a URL da aula no iframe
+        iframe.src = urlDaAula;
+        iframe.style.visibility = "visible";
+        iframe.style.pointerEvents = "auto";
+
+        // 2. Esconde a tela de boas-vindas
+        boasVindas.classList.add("hidden");
+      }
+
+      // Função para reinicializar o painel quando volta
+      window.resetPainel = function () {
+        const iframe = document.getElementById("iframe-aulas");
+        const boasVindas = document.getElementById("boas-vindas");
+
+        console.log("Reinicializando painel...");
+        iframe.src = "about:blank";
+        boasVindas.classList.remove("hidden");
+
+        // Recarregar status das aulas
+        loadLessonStatuses();
+      };
+
+      // Função extra para garantir que o iframe inicial não tenha conteúdo visível
+      window.onload = function () {
+        document.getElementById("iframe-aulas").src = "about:blank";
+
+        // Monitorar mudanças no iframe e recarregar status quando voltar
+        const iframe = document.getElementById("iframe-aulas");
+        let lastSrc = iframe.src;
+
+        setInterval(() => {
+          if (iframe.src === "about:blank" && lastSrc !== "about:blank") {
+            console.log("Detectado retorno ao painel, recarregando status...");
+            loadLessonStatuses();
+          }
+          lastSrc = iframe.src;
+        }, 500);
+      };
+    </script>
+  </body>
+</html>
