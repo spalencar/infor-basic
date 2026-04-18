@@ -421,6 +421,7 @@
               email: email,
               userType: userType,
               isAdmin: userType === "admin",
+              unlockPassword: password, // Salvar senha para desbloqueio
               createdAt: serverTimestamp(),
               status: "active",
               planStatus: userType === "pessoal" ? "active" : "pending",

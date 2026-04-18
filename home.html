@@ -38,7 +38,7 @@
       window.pendingUser = null;
       window.userData = null;
 
-      function handleAuthStateChanged(user) {
+      async function handleAuthStateChanged(user) {
         window.currentUser = user;
 
         if (!user) {
@@ -46,8 +46,8 @@
           return;
         }
 
-        loadUserData();
-        loadLessonStatuses();
+        await loadUserData();
+        await loadLessonStatuses();
       }
 
       // Carregar dados do usuário do Firestore
@@ -69,6 +69,152 @@
           console.error("Erro ao carregar dados do usuário:", error);
         }
       }
+
+      window.lockedButtons = false;
+      window.unlockExpiry = null;
+
+      // Verificar se os botões devem estar bloqueados
+      function shouldLockButtons() {
+        if (!window.userData) return false;
+
+        const userTypeKey = (
+          window.userData.userType ||
+          window.userData.planType ||
+          ""
+        )
+          .toString()
+          .trim()
+          .toLowerCase();
+
+        const isInstitutional =
+          userTypeKey === "institucional" ||
+          (!!window.userData.students &&
+            Array.isArray(window.userData.students));
+
+        return isInstitutional && !window.lockedButtons;
+      }
+
+      // Atualizar estado dos botões bloqueados
+      function updateLockedButtons() {
+        const lockButtons = shouldLockButtons();
+        const studentsBtn = document.getElementById("students-btn");
+        const homeBtn = document.getElementById("home-btn");
+        const authButton = document.getElementById("auth-button");
+        const unlockBtn = document.getElementById("unlock-btn");
+
+        if (lockButtons) {
+          // Bloquear botões
+          if (studentsBtn) {
+            studentsBtn.disabled = true;
+            studentsBtn.style.opacity = "0.5";
+            studentsBtn.style.cursor = "not-allowed";
+          }
+          if (homeBtn) {
+            homeBtn.disabled = true;
+            homeBtn.style.opacity = "0.5";
+            homeBtn.style.cursor = "not-allowed";
+          }
+          if (authButton) {
+            authButton.disabled = true;
+            authButton.style.opacity = "0.5";
+            authButton.style.cursor = "not-allowed";
+          }
+          if (unlockBtn) {
+            unlockBtn.style.display = "inline-flex";
+          }
+        } else {
+          // Desbloquear botões
+          if (studentsBtn) {
+            studentsBtn.disabled = false;
+            studentsBtn.style.opacity = "1";
+            studentsBtn.style.cursor = "pointer";
+          }
+          if (homeBtn) {
+            homeBtn.disabled = false;
+            homeBtn.style.opacity = "1";
+            homeBtn.style.cursor = "pointer";
+          }
+          if (authButton) {
+            authButton.disabled = false;
+            authButton.style.opacity = "1";
+            authButton.style.cursor = "pointer";
+          }
+          if (unlockBtn) {
+            unlockBtn.style.display = "none";
+          }
+        }
+      }
+
+      // Desbloquear botões com senha
+      window.unlockButtons = async function () {
+        // Verificar se já está desbloqueado e não expirou
+        if (window.unlockExpiry && Date.now() < window.unlockExpiry) {
+          const remainingMinutes = Math.ceil(
+            (window.unlockExpiry - Date.now()) / (60 * 1000),
+          );
+          alert(
+            `Botões já estão desbloqueados! Tempo restante: ${remainingMinutes} minutos.`,
+          );
+          return;
+        }
+
+        const password = prompt("Digite SUA senha para desbloquear:");
+        if (!password) return;
+
+        try {
+          // Verificar senha do usuário atual
+          if (!window.currentUser || !window.userData) {
+            alert("Erro: Usuário não identificado.");
+            return;
+          }
+
+          // Buscar senha salva no Firestore
+          let savedPassword = null;
+          try {
+            const userDocRef = doc(db, "users", window.currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              savedPassword = userDoc.data().unlockPassword;
+            }
+          } catch (error) {
+            console.error("Erro ao buscar senha:", error);
+          }
+
+          if (!savedPassword) {
+            alert(
+              "Senha não configurada. Entre em contato com o administrador.",
+            );
+            return;
+          }
+
+          // Verificar senha
+          if (password === savedPassword) {
+            window.lockedButtons = true;
+            window.unlockExpiry = Date.now() + 30 * 60 * 1000; // 30 minutos
+            updateLockedButtons();
+            alert("Botões desbloqueados por 30 minutos!");
+
+            // Auto-lock após expiração
+            setTimeout(
+              () => {
+                if (Date.now() >= window.unlockExpiry) {
+                  window.lockedButtons = false;
+                  updateLockedButtons();
+                  alert(
+                    "Tempo de desbloqueio expirado. Botões bloqueados novamente.",
+                  );
+                }
+              },
+              30 * 60 * 1000,
+            );
+          } else {
+            alert("Senha incorreta!");
+          }
+        } catch (error) {
+          console.error("Erro ao verificar senha:", error);
+          alert("Erro ao verificar senha. Tente novamente.");
+        }
+      };
 
       // Atualizar informações do usuário no header
       function updateUserInfo() {
@@ -161,6 +307,9 @@
             userInfo.style.display = "flex";
           }
         }
+
+        // Aplicar bloqueio de botões após atualizar userInfo
+        updateLockedButtons();
       }
 
       window.addEventListener("DOMContentLoaded", () => {
@@ -179,10 +328,17 @@
         }
       });
 
+      function normalizeLessonStatusValue(value) {
+        return (
+          value === true || value === "true" || value === 1 || value === "1"
+        );
+      }
+
       function updateStatusButton(button, status) {
-        button.textContent = status ? "Ativo" : "Pendente";
-        button.classList.toggle("active", status);
-        button.style.backgroundColor = status ? "#51cf66" : "#ff6b6b";
+        const active = normalizeLessonStatusValue(status);
+        button.textContent = active ? "Ativo" : "Pendente";
+        button.classList.toggle("active", active);
+        button.style.backgroundColor = active ? "#51cf66" : "#ff6b6b";
       }
 
       // Carregar status das aulas do Firestore
@@ -230,30 +386,34 @@
             return;
           }
 
-          const statusDocRef = doc(db, "config", "aulasStatus");
-          // Força busca de dados atualizados quando forceRefresh é true
-          const statusDoc = await getDoc(statusDocRef, {
-            source: forceRefresh ? "server" : "default",
-          });
-          console.log("Documento aulasStatus existe:", statusDoc.exists());
-          console.log(
-            "Fonte dos dados:",
-            forceRefresh ? "servidor (atualizado)" : "cache/padrão",
-          );
+          const rawStatuses =
+            window.userData?.lessonAccess ||
+            window.userData?.LessonAccess ||
+            {};
+          const statuses = Object.keys(rawStatuses).reduce((acc, lesson) => {
+            acc[lesson] = normalizeLessonStatusValue(rawStatuses[lesson]);
+            return acc;
+          }, {});
 
-          if (statusDoc.exists()) {
-            const statuses = statusDoc.data().lessonStatuses || {};
-            console.log("Statuses carregados do Firestore:", statuses);
-            // Salva no localStorage para persistência offline
-            localStorage.setItem("lessonStatuses", JSON.stringify(statuses));
+          if (Object.keys(statuses).length > 0) {
+            console.log(
+              "Statuses carregados do usuário no Firestore:",
+              statuses,
+            );
+            const normalizedStatuses = statuses;
+
+            localStorage.setItem(
+              "lessonStatuses",
+              JSON.stringify(normalizedStatuses),
+            );
             console.log("Statuses salvos no localStorage");
 
             let updatedCount = 0;
-            Object.keys(statuses).forEach((lesson) => {
+            Object.keys(normalizedStatuses).forEach((lesson) => {
               const button = document.getElementById(`status-${lesson}`);
               if (button) {
                 const oldStatus = button.classList.contains("active");
-                updateStatusButton(button, statuses[lesson]);
+                updateStatusButton(button, normalizedStatuses[lesson]);
                 const newStatus = button.classList.contains("active");
                 console.log(
                   `Botão ${lesson}: ${oldStatus ? "Ativo" : "Pendente"} -> ${newStatus ? "Ativo" : "Pendente"}`,
@@ -268,9 +428,8 @@
             );
           } else {
             console.log(
-              "Documento aulasStatus não existe, tentando localStorage",
+              "Nenhum LessonAccess encontrado no usuário, tentando localStorage",
             );
-            // Tenta carregar do localStorage se Firestore não tiver dados
             const savedStatuses = localStorage.getItem("lessonStatuses");
             if (savedStatuses) {
               const statuses = JSON.parse(savedStatuses);
@@ -309,6 +468,11 @@
       function resetLessonStatuses() {
         const buttons = document.querySelectorAll(".status-toggle");
         buttons.forEach((button) => updateStatusButton(button, false));
+
+        // Resetar estado de bloqueio dos botões
+        window.lockedButtons = false;
+        window.unlockExpiry = null;
+        updateLockedButtons();
       }
 
       // Toggle status da aula
@@ -339,32 +503,36 @@
         updateStatusButton(button, newStatus);
         console.log(`[toggleStatus] Botão atualizado no UI`);
 
-        // Salvar no Firestore no documento permitido pelas regras
         try {
           console.log(`[toggleStatus] Salvando no Firestore...`);
-          const statusDocRef = doc(db, "config", "aulasStatus");
-          const statusDoc = await getDoc(statusDocRef);
-          const statuses = statusDoc.exists()
-            ? statusDoc.data().lessonStatuses || {}
-            : {};
-          statuses[lesson] = newStatus;
+          const userDocRef = doc(db, "users", window.currentUser.uid);
+          const rawStatuses =
+            window.userData?.lessonAccess ||
+            window.userData?.LessonAccess ||
+            {};
+          const statuses = { ...rawStatuses, [lesson]: newStatus };
 
           console.log(`[toggleStatus] Enviando para Firestore:`, statuses);
           await setDoc(
-            statusDocRef,
-            { lessonStatuses: statuses },
+            userDocRef,
+            { lessonAccess: statuses, LessonAccess: statuses },
             { merge: true },
           );
           console.log(
             `[toggleStatus] Status ${lesson} salvo com sucesso no Firestore como: ${newStatus}`,
           );
 
+          window.userData = {
+            ...window.userData,
+            lessonAccess: statuses,
+            LessonAccess: statuses,
+          };
+
           // Também atualiza localStorage
           localStorage.setItem("lessonStatuses", JSON.stringify(statuses));
           console.log(`[toggleStatus] Status também salvo no localStorage`);
         } catch (error) {
           console.error("[toggleStatus] Erro ao salvar status:", error);
-          // Reverte o estado do botão se falhar ao salvar
           updateStatusButton(button, isActive);
           console.log(
             `[toggleStatus] Estado do botão revertido devido ao erro`,
@@ -377,6 +545,8 @@
         if (window.currentUser) {
           signOut(auth).then(() => {
             window.currentUser = null;
+            window.lockedButtons = false;
+            window.unlockExpiry = null;
             localStorage.removeItem("userLoggedIn");
             localStorage.removeItem("userId");
             // Não precisa chamar loadLessonStatuses aqui, pois onAuthStateChanged vai chamar
@@ -552,8 +722,14 @@
         transform: scale(1.05);
       }
 
-      .header-icon-btn:active {
-        transform: scale(0.95);
+      .unlock-btn {
+        background-color: #ff6b6b;
+        color: white;
+      }
+
+      .unlock-btn:hover {
+        background-color: #ff5252;
+        transform: scale(1.05);
       }
 
       .logotipo {
@@ -797,6 +973,15 @@
           </div>
           <div class="header-title" id="header-title"></div>
           <div class="header-buttons">
+            <button
+              id="unlock-btn"
+              class="header-icon-btn unlock-btn"
+              onclick="unlockButtons()"
+              title="Desbloquear Botões Administrativos"
+              style="display: none"
+            >
+              🔓
+            </button>
             <button
               id="students-btn"
               class="header-icon-btn"
