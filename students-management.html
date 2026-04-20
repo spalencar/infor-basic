@@ -399,6 +399,246 @@
       margin-top: 15px;
     }
 
+    /* Estilos para impressão do certificado */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
+
+      body>*:not(.certificate-print-container) {
+        display: none !important;
+      }
+
+      .certificate-print-container {
+        display: block !important;
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        visibility: visible !important;
+      }
+
+      .certificate {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        background: white !important;
+        border: 3px solid #d4af37 !important;
+        padding: 20mm !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        visibility: visible !important;
+      }
+
+      .certificate-inner-border {
+        border: 1px solid #b8860b !important;
+        padding: 15mm !important;
+        width: 100% !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        visibility: visible !important;
+      }
+
+      .certificate-print-container *,
+      .certificate *,
+      .certificate-inner-border * {
+        visibility: visible !important;
+        color: black !important;
+      }
+
+      .certificate-title {
+        font-size: 24pt !important;
+        font-weight: bold !important;
+        color: #b8860b !important;
+        margin-bottom: 15pt !important;
+        text-transform: uppercase !important;
+      }
+
+      .certificate-divider {
+        width: 150pt !important;
+        height: 2pt !important;
+        background: #d4af37 !important;
+        margin: 0 auto 20pt !important;
+      }
+
+      .certificate-text {
+        font-size: 14pt !important;
+        color: black !important;
+        margin-bottom: 15pt !important;
+      }
+
+      .certificate-student-name {
+        font-size: 20pt !important;
+        font-weight: bold !important;
+        color: #b8860b !important;
+        margin: 15pt 0 !important;
+        text-transform: uppercase !important;
+      }
+
+      .certificate-course {
+        font-size: 18pt !important;
+        font-weight: bold !important;
+        color: #d4af37 !important;
+        margin: 15pt 0 !important;
+      }
+
+      .certificate-institution {
+        font-size: 18pt !important;
+        color: black !important;
+        margin: 12pt 0 !important;
+      }
+
+      .certificate-date {
+        font-size: 12pt !important;
+        color: #666 !important;
+        margin: 15pt 0 !important;
+      }
+
+      .certificate-signature {
+        margin-top: 30pt !important;
+        font-size: 10pt !important;
+        color: #666 !important;
+      }
+
+      .certificate-signature-line {
+        width: 150pt !important;
+        height: 1pt !important;
+        background: black !important;
+        margin: 8pt auto !important;
+      }
+
+      .certificate-watermark {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) rotate(-45deg) !important;
+        font-size: 48pt !important;
+        color: rgba(212, 175, 55, 0.1) !important;
+        font-weight: bold !important;
+        pointer-events: none !important;
+        z-index: 1 !important;
+      }
+
+      .certificate-footer {
+        display: none !important;
+      }
+    }
+
+    .certificate-print-container {
+      display: none;
+    }
+
+    .certificate {
+      background: white;
+      border: 3px solid #d4af37;
+      padding: 40px;
+      position: relative;
+      text-align: center;
+      font-family: 'Georgia', serif;
+    }
+
+    .certificate-inner-border {
+      border: 1px solid #b8860b;
+      padding: 30px;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    .certificate-title {
+      font-size: 28px;
+      font-weight: bold;
+      color: #b8860b;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+
+    .certificate-divider {
+      width: 200px;
+      height: 2px;
+      background: #d4af37;
+      margin: 0 auto 30px;
+    }
+
+    .certificate-text {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .certificate-student-name {
+      font-size: 24px;
+      font-weight: bold;
+      color: #b8860b;
+      margin: 20px 0;
+      text-transform: uppercase;
+    }
+
+    .certificate-course {
+      font-size: 20px;
+      font-weight: bold;
+      color: #d4af37;
+      margin: 20px 0;
+    }
+
+    .certificate-institution {
+      font-size: 18px;
+      color: #333;
+      margin: 15px 0;
+    }
+
+    .certificate-date {
+      font-size: 14px;
+      color: #666;
+      margin: 20px 0;
+    }
+
+    .certificate-signature {
+      margin-top: 40px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .certificate-signature-line {
+      width: 200px;
+      height: 1px;
+      background: #333;
+      margin: 10px auto;
+    }
+
+    .certificate-watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 60px;
+      color: rgba(212, 175, 55, 0.1);
+      font-weight: bold;
+      pointer-events: none;
+    }
+
+    .certificate-footer {
+      display: none;
+    }
+
     /* Messages */
     .message {
       padding: 15px;
@@ -1063,8 +1303,8 @@
               <p><strong>Conclusão:</strong> ${completedDate}</p>
               <div class="certificate-info">
                 <span>Status: Emitido</span>
-                <button class="btn btn-secondary btn-small" onclick="downloadCertificate('${student.id}')">
-                  📥 Baixar
+                <button class="btn btn-secondary btn-small" onclick="printCertificate('${student.id}')">
+                  �️ Imprimir
                 </button>
               </div>
             </div>
@@ -1078,24 +1318,91 @@
       }
     }
 
-    // Download do certificado (simulação)
-    window.downloadCertificate = function (studentId) {
+    // Imprimir certificado
+    window.printCertificate = function (studentId) {
       const students = userData.students || [];
       const student = students.find((s) => s.id === studentId);
 
       if (student) {
-        // Simular download do certificado
         showMessage(
-          `Preparando certificado para ${student.name}...`,
+          `Preparando certificado para impressão...`,
           "success",
         );
 
-        // Aqui você implementaria a geração real do PDF
-        setTimeout(() => {
-          showMessage("Certificado baixado com sucesso!", "success");
-        }, 2000);
+        try {
+          createAndPrintCertificate(student);
+        } catch (error) {
+          console.error("Erro ao preparar certificado:", error);
+          showMessage("Erro ao preparar certificado. Tente novamente.", "error");
+        }
       }
     };
+
+    // Função para criar e imprimir o certificado
+    function createAndPrintCertificate(student) {
+      // Remover certificado anterior se existir
+      const existingContainer = document.querySelector('.certificate-print-container');
+      if (existingContainer) {
+        existingContainer.remove();
+      }
+
+      // Criar container para impressão
+      const printContainer = document.createElement('div');
+      printContainer.className = 'certificate-print-container';
+
+      // Formatar data
+      const completionDate = new Date(student.completedAt).toLocaleDateString('pt-BR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      // Criar HTML do certificado
+      printContainer.innerHTML = `
+        <div class="certificate">
+          <div class="certificate-inner-border">
+            <div class="certificate-watermark">MIDI@TIVA EDUCA+</div>
+            
+            <div class="certificate-title">Certificado de Conclusão</div>
+            <div class="certificate-divider"></div>
+            
+            <div class="certificate-text">Certificamos que</div>
+            <div class="certificate-student-name">${student.name.toUpperCase()}</div>
+            <div class="certificate-text">concluiu com sucesso o curso</div>
+            
+            <div class="certificate-course">Informática Básica</div>
+            
+            <div class="certificate-institution">
+              oferecido por:<br>
+              <strong>${userData.name || 'Midi@tiva Educa+'}</strong>
+            </div>
+            
+            <div class="certificate-date">Concluído em: ${completionDate}</div>
+            
+            <div class="certificate-signature">
+              Assinatura Digital
+              <div class="certificate-signature-line"></div>
+            </div>
+            
+          </div>
+        </div>
+      `;
+
+      // Adicionar ao body
+      document.body.appendChild(printContainer);
+
+      // Aguardar um pouco para o conteúdo ser renderizado
+      setTimeout(() => {
+        // Abrir diálogo de impressão
+        window.print();
+
+        // Remover o container após a impressão
+        setTimeout(() => {
+          printContainer.remove();
+          showMessage('Certificado enviado para impressão!', 'success');
+        }, 1000);
+      }, 500);
+    }
 
     // Carregar certificados ao iniciar
     setTimeout(() => {

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Completo Firestore</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e2e8f0;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 { color: #feca57; text-align: center; margin-bottom: 30px; }
+        h2 { color: #feca57; margin: 20px 0 10px 0; }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { 
+            background: rgba(81, 207, 102, 0.2); 
+            color: #51cf66; 
+            border: 1px solid rgba(81, 207, 102, 0.3);
+        }
+        .error { 
+            background: rgba(255, 107, 107, 0.2); 
+            color: #ff6b6b; 
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        .warning { 
+            background: rgba(254, 202, 87, 0.2); 
+            color: #feca57; 
+            border: 1px solid rgba(254, 202, 87, 0.3);
+        }
+        .info { 
+            background: rgba(52, 152, 219, 0.2); 
+            color: #3498db; 
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        #results {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>?? Diagnóstico Completo do Firestore</h1>
+        
+        <div class="grid">
+            <div class="card">
+                <h2>Configuração Firebase</h2>
+                <div id="firebase-status" class="status info">Verificando...</div>
+                <button onclick="testFirebaseConfig()">Testar Configuração</button>
+            </div>
+            
+            <div class="card">
+                <h2>Autenticação</h2>
+                <div id="auth-status" class="status info">Verificando...</div>
+                <button onclick="testAuth()">Testar Autenticação</button>
+            </div>
+            
+            <div class="card">
+                <h2>Conexão Firestore</h2>
+                <div id="firestore-status" class="status info">Verificando...</div>
+                <button onclick="testFirestoreConnection()">Testar Conexão</button>
+            </div>
+            
+            <div class="card">
+                <h2>Permissões</h2>
+                <div id="permissions-status" class="status info">Verificando...</div>
+                <button onclick="testPermissions()">Testar Permissões</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Testes Completos</h2>
+            <button onclick="runCompleteDiagnosis()">?? Executar Diagnóstico Completo</button>
+            <button onclick="testCollectionUsers()">?? Testar Coleção Users</button>
+            <button onclick="testCreateUser()">?? Criar Usuário Teste</button>
+            <button onclick="clearResults()">?? Limpar Resultados</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, getDoc, query, where, limit } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB60LaJaxphLZvb2c0T3t8T9DYTPgTXFL0",
+            authDomain: "infor-basic.firebaseapp.com",
+            projectId: "infor-basic",
+            storageBucket: "infor-basic.firebasestorage.app",
+            messagingSenderId: "152738530319",
+            appId: "1:152738530319:web:0c9644a18c6e340b2c8f7a",
+        };
+
+        let app, db, auth;
+        let diagnosticResults = [];
+
+        function log(message, type = 'info', data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const results = document.getElementById('results');
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            
+            diagnosticResults.push({ timestamp, message, type, data });
+            
+            results.textContent += logEntry + '\n';
+            results.scrollTop = results.scrollHeight;
+            
+            console.log(logEntry, data || '');
+        }
+
+        function updateStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.className = `status ${type}`;
+            }
+        }
+
+        window.testFirebaseConfig = function() {
+            log('=== Testando Configuração Firebase ===');
+            
+            try {
+                log('Verificando configuração...');
+                log(`Project ID: ${firebaseConfig.projectId}`);
+                log(`Auth Domain: ${firebaseConfig.authDomain}`);
+                log(`API Key: ${firebaseConfig.apiKey.substring(0, 10)}...`);
+                
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                log('Firebase inicializado com sucesso', 'success');
+                updateStatus('firebase-status', 'Firebase configurado', 'success');
+                
+                return true;
+            } catch (error) {
+                log(`Erro na configuração: ${error.message}`, 'error', error);
+                updateStatus('firebase-status', 'Erro na configuração', 'error');
+                return false;
+            }
+        };
+
+        window.testAuth = async function() {
+            log('=== Testando Autenticação ===');
+            
+            if (!auth) {
+                log('Auth não inicializado', 'error');
+                updateStatus('auth-status', 'Auth não inicializado', 'error');
+                return false;
+            }
+            
+            try {
+                log('Verificando usuário atual...');
+                const currentUser = auth.currentUser;
+                
+                if (currentUser) {
+                    log(`Usuário autenticado: ${currentUser.uid}`, 'success');
+                    log(`Email: ${currentUser.email || 'N/A'}`);
+                    updateStatus('auth-status', 'Usuário autenticado', 'success');
+                    return true;
+                } else {
+                    log('Nenhum usuário autenticado', 'warning');
+                    log('Tentando autenticação anônima...');
+                    
+                    const userCredential = await signInAnonymously(auth);
+                    log(`Autenticação anônima bem-sucedida: ${userCredential.user.uid}`, 'success');
+                    updateStatus('auth-status', 'Autenticado anonimamente', 'success');
+                    return true;
+                }
+            } catch (error) {
+                log(`Erro na autenticação: ${error.message}`, 'error', error);
+                updateStatus('auth-status', 'Erro na autenticação', 'error');
+                return false;
+            }
+        };
+
+        window.testFirestoreConnection = async function() {
+            log('=== Testando Conexão Firestore ===');
+            
+            if (!db) {
+                log('Firestore não inicializado', 'error');
+                updateStatus('firestore-status', 'Firestore não inicializado', 'error');
+                return false;
+            }
+            
+            try {
+                log('Testando conexão básica...');
+                
+                // Tentar uma query simples
+                const testCollection = collection(db, '_test_connection');
+                const testQuery = query(testCollection, limit(1));
+                
+                const snapshot = await getDocs(testQuery);
+                log('Conexão Firestore bem-sucedida', 'success');
+                log(`Query executada: ${snapshot.size} documentos`);
+                updateStatus('firestore-status', 'Conexão ativa', 'success');
+                
+                return true;
+            } catch (error) {
+                log(`Erro na conexão: ${error.message}`, 'error', error);
+                log(`Código do erro: ${error.code}`);
+                
+                if (error.code === 'permission-denied') {
+                    log('Erro de permissão - verifique as regras do Firestore', 'warning');
+                } else if (error.code === 'unavailable') {
+                    log('Serviço indisponível', 'error');
+                } else if (error.code === 'unauthenticated') {
+                    log('Usuário não autenticado', 'warning');
+                }
+                
+                updateStatus('firestore-status', 'Erro de conexão', 'error');
+                return false;
+            }
+        };
+
+        window.testPermissions = async function() {
+            log('=== Testando Permissões ===');
+            
+            if (!db) {
+                log('Firestore não disponível', 'error');
+                updateStatus('permissions-status', 'Firestore não disponível', 'error');
+                return false;
+            }
+            
+            try {
+                log('Testando permissão de leitura na coleção users...');
+                
+                const usersCollection = collection(db, 'users');
+                const snapshot = await getDocs(usersCollection);
+                
+                log(`Permissão concedida: ${snapshot.size} documentos encontrados`, 'success');
+                updateStatus('permissions-status', 'Permissões OK', 'success');
+                
+                if (snapshot.size > 0) {
+                    log('Exemplos de documentos:');
+                    snapshot.forEach((doc, index) => {
+                        if (index < 3) {
+                            const data = doc.data();
+                            log(`  - ${doc.id}: ${data.name || 'N/A'} (${data.email || 'N/A'})`);
+                        }
+                    });
+                }
+                
+                return true;
+            } catch (error) {
+                log(`Erro de permissão: ${error.message}`, 'error', error);
+                log(`Código: ${error.code}`);
+                
+                if (error.code === 'permission-denied') {
+                    log('Acesso negado à coleção users', 'error');
+                    log('Verifique as regras de segurança do Firestore');
+                    log('Regras necessárias: allow read, write if request.auth != null');
+                }
+                
+                updateStatus('permissions-status', 'Erro de permissão', 'error');
+                return false;
+            }
+        };
+
+        window.testCollectionUsers = async function() {
+            log('=== Testando Coleção Users ===');
+            
+            if (!db) {
+                log('Firestore não disponível', 'error');
+                return;
+            }
+            
+            try {
+                const usersCollection = collection(db, 'users');
+                const snapshot = await getDocs(usersCollection);
+                
+                log(`Total de documentos: ${snapshot.size}`);
+                
+                if (snapshot.size === 0) {
+                    log('Coleção users está vazia', 'warning');
+                    log('Isso pode explicar por que o dashboard não mostra dados');
+                } else {
+                    log(`Documentos encontrados: ${snapshot.size}`, 'success');
+                    
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        log(`ID: ${doc.id}`);
+                        log(`  Nome: ${data.name || 'N/A'}`);
+                        log(`  Email: ${data.email || 'N/A'}`);
+                        log(`  Tipo: ${data.userType || 'N/A'}`);
+                        log(`  Status: ${data.status || 'N/A'}`);
+                        log(`  Criado: ${data.createdAt ? new Date(data.createdAt.toDate ? data.createdAt.toDate() : data.createdAt).toLocaleString() : 'N/A'}`);
+                        log('---');
+                    });
+                }
+                
+            } catch (error) {
+                log(`Erro ao acessar coleção users: ${error.message}`, 'error', error);
+            }
+        };
+
+        window.testCreateUser = async function() {
+            log('=== Criando Usuário Teste ===');
+            
+            if (!db) {
+                log('Firestore não disponível', 'error');
+                return;
+            }
+            
+            try {
+                const usersCollection = collection(db, 'users');
+                const testUser = {
+                    name: 'Usuário Diagnóstico',
+                    email: 'diagnostico@teste.com',
+                    userType: 'pessoal',
+                    status: 'active',
+                    createdAt: new Date(),
+                    diagnosticTest: true,
+                    createdBy: 'diagnostic-tool'
+                };
+                
+                const docRef = await addDoc(usersCollection, testUser);
+                log(`Usuário teste criado: ${docRef.id}`, 'success');
+                log('Verifique se aparece no dashboard');
+                
+            } catch (error) {
+                log(`Erro ao criar usuário: ${error.message}`, 'error', error);
+            }
+        };
+
+        window.runCompleteDiagnosis = async function() {
+            log('=== INICIANDO DIAGNÓSTICO COMPLETO ===');
+            log('Data/hora: ' + new Date().toLocaleString());
+            log('User Agent: ' + navigator.userAgent);
+            log('URL atual: ' + window.location.href);
+            
+            const results = [];
+            
+            // Teste 1: Configuração
+            results.push(await testFirebaseConfig());
+            
+            // Teste 2: Autenticação
+            results.push(await testAuth());
+            
+            // Teste 3: Conexão
+            results.push(await testFirestoreConnection());
+            
+            // Teste 4: Permissões
+            results.push(await testPermissions());
+            
+            // Teste 5: Coleção Users
+            await testCollectionUsers();
+            
+            // Resumo
+            const passedTests = results.filter(r => r === true).length;
+            const totalTests = results.length;
+            
+            log(`=== RESUMO DO DIAGNÓSTICO ===`);
+            log(`Testes passados: ${passedTests}/${totalTests}`);
+            
+            if (passedTests === totalTests) {
+                log('Todos os testes passaram! O Firestore está funcionando.', 'success');
+                log('Se mesmo assim não há dados, verifique se a coleção users existe e tem documentos.');
+            } else {
+                log('Alguns testes falharam. Verifique os erros acima.', 'error');
+            }
+        };
+
+        window.clearResults = function() {
+            document.getElementById('results').textContent = '';
+            diagnosticResults = [];
+            
+            // Resetar status
+            updateStatus('firebase-status', 'Verificando...', 'info');
+            updateStatus('auth-status', 'Verificando...', 'info');
+            updateStatus('firestore-status', 'Verificando...', 'info');
+            updateStatus('permissions-status', 'Verificando...', 'info');
+        };
+
+        // Inicialização automática
+        log('Ferramenta de diagnóstico carregada');
+        log('Clique em "Executar Diagnóstico Completo" para começar');
+    </script>
+</body>
+</html>
