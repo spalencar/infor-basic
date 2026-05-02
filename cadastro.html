@@ -159,16 +159,18 @@
     }
 
     .plan-card.featured::before {
-      content: "MAIS POPULAR";
+      content: "MELHOR CUSTO-BENEFÍCIO";
       position: absolute;
-      top: 20px;
-      right: -30px;
+      top: 0px;
+      left: 50%;
+      transform: translateX(-50%);
       background: #ff6b6b;
       color: white;
-      padding: 5px 40px;
+      padding: 8px 20px;
       font-size: 0.8em;
       font-weight: bold;
-      transform: rotate(45deg);
+      border-radius: 20px;
+      z-index: 10;
     }
 
     .plan-card:hover {
@@ -201,6 +203,13 @@
     .plan-price span {
       font-size: 0.4em;
       color: rgba(255, 255, 255, 0.7);
+    }
+
+    .price-note {
+      font-size: 0.95em;
+      color: rgba(255, 255, 255, 0.6);
+      margin: 1px 0 20px 0;
+      font-style: italic;
     }
 
     .plan-features {
@@ -712,7 +721,9 @@
       }
 
       .plan-card.featured::before {
-        right: -40px;
+        top: 0px;
+        font-size: 0.7em;
+        padding: 6px 15px;
       }
 
       .intro h2 {
@@ -787,56 +798,54 @@
       <div class="plan-card">
         <div class="plan-icon">👤</div>
         <h3 class="plan-name">Plano Pessoal</h3>
-        <div class="plan-price">R$ 269,90 <span>em 3x</span></div>
+        <div class="plan-price">R$ 67,00 <span>pagamento único</span></div>
+        <p class="price-note">Acesso por seis meses</p>
         <ul class="plan-features">
           <li>
-            <span class="check-icon">✓</span> Acesso imediato a todas as 15
-            aulas
+            <span class="check-icon">✓</span> Acesso vitalício às 15
+            aulas interativas
           </li>
           <li>
-            <span class="check-icon">✓</span> Liberação automática de conteúdo
+            <span class="check-icon">✓</span> Conteúdo 100% livre para estudar no seu ritmo
           </li>
           <li>
-            <span class="check-icon">✓</span> Certificado pessoal ao concluir
+            <span class="check-icon">✓</span> Atividades e Quizzes de fixação inclusos
           </li>
           <li>
-            <span class="check-icon">✓</span> Acesso vitalício ao material
+            <span class="check-icon">✓</span> Certificado Digital incluso após a conclusão
           </li>
-          <li><span class="check-icon">✓</span> Suporte por e-mail</li>
+          <li><span class="check-icon">✓</span> Suporte direto via WhatsApp/E-mail</li>
         </ul>
         <button class="plan-button" onclick="selectPlan('pessoal')">
-          Aproveite e Assine Agora
+          Quero Começar Agora!
         </button>
       </div>
 
       <div class="plan-card featured">
         <div class="plan-icon">🏫</div>
         <h3 class="plan-name">Plano Institucional</h3>
-        <div class="plan-price">R$ 359,90 <span>em 3x</span></div>
+        <div class="plan-price">R$ 497,00 <span>Acesso Anual</span></div>
+        <p class="price-note">Equivale a menos de R$ 42,00 por mês</p>
         <ul class="plan-features">
           <li>
-            <span class="check-icon">✓</span> Controle total sobre liberação
-            de aulas
+            <span class="check-icon">✓</span> Alunos Ilimitados: Sem custo extra por estudante
           </li>
           <li>
-            <span class="check-icon">✓</span> Gerenciamento de alunos
-            ilimitado
+            <span class="check-icon">✓</span> Painel do Gestor: Controle total sobre a liberação das aulas
           </li>
           <li>
-            <span class="check-icon">✓</span> Emissão de certificados
-            personalizados
+            <span class="check-icon">✓</span> Emissão de Certificados (Prontos para imprimir)
           </li>
           <li>
-            <span class="check-icon">✓</span> Painel administrativo exclusivo
+            <span class="check-icon">✓</span> Relatórios de progresso para acompanhar a turma
           </li>
-          <li><span class="check-icon">✓</span> Suporte prioritário 24/7</li>
+          <li><span class="check-icon">✓</span> Ideal para Escolas, ONGs, Igrejas e Empresas</li>
           <li>
-            <span class="check-icon">✓</span> Relatórios de progresso
-            detalhados
+            <span class="check-icon">✓</span> Suporte Prioritário para o Gestor
           </li>
         </ul>
         <button class="plan-button" onclick="selectPlan('institucional')">
-          Aproveite e Assine Agora
+          Contratar para minha Instituição
         </button>
       </div>
     </section>
@@ -871,9 +880,9 @@
             <label for="planType">Tipo de Plano:</label>
             <select id="planType" required onchange="updatePlanInfo()">
               <option value="">Selecione um plano</option>
-              <option value="pessoal">Plano Pessoal - R$ 269,90 em 3x</option>
+              <option value="pessoal">Plano Pessoal - R$ 67,00 pagamento único</option>
               <option value="institucional">
-                Plano Institucional - R$ 359,90 em 3x
+                Plano Institucional - R$ 497,00 pagamento único
               </option>
             </select>
           </div>
@@ -976,14 +985,14 @@
             </ul>
 
             <h4>3. Planos e Pagamento</h4>
-            <p><strong>Plano Pessoal (R$ 29,90/mês):</strong></p>
+            <p><strong>Plano Pessoal (R$ 67,00 pagamento único):</strong></p>
             <ul>
               <li>Acesso individual</li>
               <li>Liberação automática de conteúdo</li>
               <li>Certificado pessoal</li>
             </ul>
 
-            <p><strong>Plano Institucional (R$ 99,90/mês):</strong></p>
+            <p><strong>Plano Institucional (R$ 497,00 pagamento único):</strong></p>
             <ul>
               <li>Gerenciamento de alunos ilimitado</li>
               <li>Controle sobre liberação de aulas</li>
