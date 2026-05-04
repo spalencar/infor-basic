@@ -555,6 +555,22 @@
       .actions-grid {
         grid-template-columns: 1fr;
       }
+
+      /* Responsive design for contract tab */
+      .contract-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+      }
+
+      .contract-form-container,
+      .contract-preview-container {
+        padding: 20px !important;
+      }
+
+      .contract-preview {
+        font-size: 11px !important;
+        max-height: 400px !important;
+      }
     }
   </style>
 </head>
@@ -596,6 +612,9 @@
         </button>
         <button class="tab-button" onclick="switchTab('reports')">
           📈 Relatórios
+        </button>
+        <button class="tab-button" onclick="switchTab('contract')">
+          📄 Contrato/Recibo
         </button>
         <button class="tab-button" onclick="switchTab('settings')">
           ⚙️ Configurações
@@ -783,6 +802,350 @@
         </div>
       </div>
 
+      <!-- Aba Contrato -->
+      <div id="contract-tab" class="tab-content">
+        <h2 class="section-title">📄 Gerador de Contrato</h2>
+
+        <div class="contract-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+          <!-- Coluna Esquerda: Formulário -->
+          <div>
+            <div class="contract-form-container"
+              style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1);">
+              <h3 style="color: #feca57; margin-bottom: 20px; text-align: center;">📝 Dados do Contrato</h3>
+
+              <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                  <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Nome da
+                    Plataforma/Empresa:</label>
+                  <input type="text" id="plataforma-nome" placeholder="Ex: Midi@tiva Educa+"
+                    style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #e2e8f0; font-size: 14px;"
+                    oninput="updateContract()">
+                </div>
+
+                <div>
+                  <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Nome do
+                    Cliente/Instituição:</label>
+                  <input type="text" id="cliente-nome" placeholder="Ex: João Silva"
+                    style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #e2e8f0; font-size: 14px;"
+                    oninput="updateContract()">
+                </div>
+
+                <div>
+                  <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">CPF/CNPJ:</label>
+                  <input type="text" id="cliente-cnpj" placeholder="Ex: 123.456.789-00"
+                    style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #e2e8f0; font-size: 14px;"
+                    oninput="updateContract()">
+                </div>
+
+                <div>
+                  <label
+                    style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Modalidade:</label>
+                  <select id="modalidade"
+                    style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #e2e8f0; font-size: 14px;"
+                    onchange="updateContract()">
+                    <option value="">Selecione...</option>
+                    <option value="PESSOAL">PESSOAL</option>
+                    <option value="INSTITUCIONAL">INSTITUCIONAL</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Valor
+                    (R$):</label>
+                  <input type="text" id="valor" placeholder="Ex: 99,90"
+                    style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #e2e8f0; font-size: 14px;"
+                    oninput="updateContract()">
+                </div>
+
+                <div>
+                  <label
+                    style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Cidade/UF:</label>
+                  <input type="text" id="cidade" placeholder="Ex: São Paulo/SP"
+                    style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #e2e8f0; font-size: 14px;"
+                    oninput="updateContract()">
+                </div>
+
+                <div>
+                  <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Data do
+                    Contrato:</label>
+                  <input type="date" id="data-contrato"
+                    style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #e2e8f0; font-size: 14px;"
+                    onchange="updateContract()">
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="clearContractForm()" style="flex: 1;">
+                  🗑️ Limpar Formulário
+                </button>
+                <button class="btn btn-primary" onclick="generateContractPDF()" style="flex: 1;">
+                  📄 Gerar PDF
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coluna Direita: Visualização do Contrato -->
+          <div>
+            <div class="contract-preview-container"
+              style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); max-height: 600px; overflow-y: auto;">
+              <h3 style="color: #feca57; margin-bottom: 20px; text-align: center;">📋 Visualização do Contrato</h3>
+
+              <div id="contract-preview" class="contract-preview"
+                style="background: white; color: black; padding: 20px; border-radius: 8px; font-size: 12px; line-height: 1.4;">
+                <h4 style="text-align: center; margin-bottom: 20px; font-size: 16px; font-weight: bold;">CONTRATO DE
+                  LICENÇA DE ACESSO À PLATAFORMA DE ENSINO</h4>
+
+                <p><strong>1. DAS PARTES</strong></p>
+                <p>Este contrato é celebrado entre o <span id="preview-plataforma">[NOME DA SUA PLATAFORMA/SEU NOME OU
+                    EMPRESA]</span>, doravante denominada CONTRATADA, e o usuário <span id="preview-cliente">[NOME DO
+                    CLIENTE/INSTITUIÇÃO]</span>, inscrito sob o CPF/CNPJ <span id="preview-cnpj">[NÚMERO]</span>,
+                  doravante denominado CONTRATANTE.</p>
+
+                <p style="margin-top: 15px;"><strong>2. DO OBJETO</strong></p>
+                <p>O presente contrato tem como objeto a licença de uso temporário da plataforma de curso de Informática
+                  Básica Online, composta por 15 aulas interativas, atividades e sistema de avaliação.</p>
+
+                <p style="margin-top: 15px;"><strong>3. DAS MODALIDADES E ACESSO</strong></p>
+                <p>O CONTRATANTE optou pela modalidade: <span id="preview-modalidade">[PESSOAL ou INSTITUCIONAL]</span>.
+                </p>
+                <p>Plano Pessoal: Acesso individual e intransferível. Todas as aulas são desbloqueadas imediatamente.
+                  Inclui 01 (um) certificado em nome do titular após conclusão.</p>
+                <p>Plano Institucional: Acesso voltado para gestão de grupos. O CONTRATANTE (Gestor) possui autonomia
+                  para liberar as aulas gradativamente para seus alunos e realizar a emissão de certificados em lote ou
+                  individual através do Painel de Gestão.</p>
+
+                <p style="margin-top: 15px;"><strong>4. DO PAGAMENTO E VIGÊNCIA</strong></p>
+                <p>O acesso será liberado mediante confirmação de pagamento via PIX no valor de R$ <span
+                    id="preview-valor">[VALOR]</span>.</p>
+                <p>Para o Plano Pessoal, o acesso tem validade por um período de 6 meses a partir da validação.</p>
+                <p>Para o Plano Institucional, a licença tem validade de 12 meses a partir da ativação.</p>
+
+                <p style="margin-top: 15px;"><strong>5. DAS RESPONSABILIDADES</strong></p>
+                <p>CONTRATADA: Garantir a disponibilidade da plataforma e o funcionamento das ferramentas de emissão de
+                  certificado.</p>
+                <p>CONTRATANTE: No plano Institucional, o CONTRATANTE é o único responsável pela veracidade dos nomes
+                  inseridos nos certificados emitidos em lote e pelo gerenciamento de sua senha de acesso ao Painel do
+                  Gestor.</p>
+
+                <p style="margin-top: 15px;"><strong>6. PROPRIEDADE INTELECTUAL</strong></p>
+                <p>Todo o conteúdo das aulas (vídeos, textos, atividades visuais) é de propriedade exclusiva da
+                  CONTRATADA. É proibida a reprodução, venda ou distribuição do conteúdo fora da plataforma sem
+                  autorização prévia.</p>
+
+                <p style="margin-top: 15px;"><strong>7. RESCISÃO</strong></p>
+                <p>Por se tratar de um produto digital com liberação imediata de conteúdo, o direito de arrependimento
+                  poderá ser exercido em até 7 (sete) dias após a compra, com devolução integral do valor, desde que não
+                  tenha havido a emissão de certificados.</p>
+
+                <p style="margin-top: 15px;"><strong>8. DAS ASSINATURAS</strong></p>
+                <p>E por estarem assim justos e contratados, as partes assinam o presente contrato em duas vias de igual
+                  teor e forma, na presença das testemunhas abaixo.</p>
+
+                <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+                  <div style="width: 45%; text-align: center;">
+                    <p style="margin-bottom: 40px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                      <strong><span id="preview-cliente-assinatura">[NOME DO CLIENTE/INSTITUIÇÃO]</span></strong>
+                    </p>
+                    <p style="font-size: 11px; color: #666;">CONTRATANTE</p>
+                  </div>
+                  <div style="width: 45%; text-align: center;">
+                    <p style="margin-bottom: 40px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                      <strong><span id="preview-plataforma-assinatura">[NOME DA SUA PLATAFORMA/SEU NOME OU
+                          EMPRESA]</span></strong>
+                    </p>
+                    <p style="font-size: 11px; color: #666;">CONTRATADA</p>
+                  </div>
+                </div>
+
+                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                  <div style="width: 45%; text-align: center;">
+                    <p style="margin-bottom: 40px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                      _________________________
+                    </p>
+                    <p style="font-size: 11px; color: #666;">Testemunha 1</p>
+                    <p style="font-size: 11px; color: #666;">Nome:</p>
+                    <p style="font-size: 11px; color: #666;">CPF:</p>
+                  </div>
+                  <div style="width: 45%; text-align: center;">
+                    <p style="margin-bottom: 40px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                      _________________________
+                    </p>
+                    <p style="font-size: 11px; color: #666;">Testemunha 2</p>
+                    <p style="font-size: 11px; color: #666;">Nome:</p>
+                    <p style="font-size: 11px; color: #666;">CPF:</p>
+                  </div>
+                </div>
+
+                <p style="margin-top: 40px; text-align: center; font-size: 11px; color: #666;">
+                  <span id="preview-cidade-data">[CIDADE/UF], [DATA DO CONTRATO]</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gerador de Recibo -->
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid rgba(255, 255, 255, 0.1);">
+          <h2 class="section-title">🧾 Gerador de Recibo</h2>
+
+          <div class="receipt-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <!-- Coluna Esquerda: Formulário de Recibo -->
+            <div>
+              <div class="receipt-form-container"
+                style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <h3 style="color: #feca57; margin-bottom: 20px; text-align: center;">🧾 Dados do Recibo</h3>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                  <div>
+                    <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Nome do
+                      Recebedor:</label>
+                    <input type="text" id="recebedor-nome" placeholder="Ex: Midi@tiva Educa+"
+                      style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.6); color: #e2e8f0; font-size: 14px;"
+                      oninput="updateReceipt()">
+                  </div>
+
+                  <div>
+                    <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Nome do
+                      Pagador:</label>
+                    <input type="text" id="pagador-nome" placeholder="Ex: João Silva"
+                      style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.6); color: #e2e8f0; font-size: 14px;"
+                      oninput="updateReceipt()">
+                  </div>
+
+                  <div>
+                    <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">CPF/CNPJ do
+                      Pagador:</label>
+                    <input type="text" id="pagador-cpf" placeholder="Ex: 123.456.789-00"
+                      style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.6); color: #e2e8f0; font-size: 14px;"
+                      oninput="updateReceipt()">
+                  </div>
+
+                  <div>
+                    <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Descrição do
+                      Pagamento:</label>
+                    <select id="descricao-pagamento"
+                      style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.6); color: #e2e8f0; font-size: 14px;"
+                      onchange="updateReceipt()">
+                      <option value="">Selecione...</option>
+                      <option value="Plano Pessoal - Licença de Acesso à Plataforma">Plano Pessoal - Licença de Acesso à
+                        Plataforma</option>
+                      <option value="Plano Institucional - Licença de Acesso à Plataforma">Plano Institucional - Licença
+                        de Acesso à Plataforma</option>
+                      <option value="Renovação de Licença - Plano Pessoal">Renovação de Licença - Plano Pessoal</option>
+                      <option value="Renovação de Licença - Plano Institucional">Renovação de Licença - Plano
+                        Institucional</option>
+                      <option value="Serviços Adicionais - Emissão de Certificados">Serviços Adicionais - Emissão de
+                        Certificados</option>
+                      <option value="Outros Serviços">Outros Serviços</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Valor
+                      (R$):</label>
+                    <input type="text" id="valor-recibo" placeholder="Ex: 99,90"
+                      style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.6); color: #e2e8f0; font-size: 14px;"
+                      oninput="updateReceipt()">
+                  </div>
+
+                  <div>
+                    <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Forma de
+                      Pagamento:</label>
+                    <select id="forma-pagamento"
+                      style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.6); color: #e2e8f0; font-size: 14px;"
+                      onchange="updateReceipt()">
+                      <option value="">Selecione...</option>
+                      <option value="PIX">PIX</option>
+                      <option value="Transferência Bancária">Transferência Bancária</option>
+                      <option value="Cartão de Crédito">Cartão de Crédito</option>
+                      <option value="Cartão de Débito">Cartão de Débito</option>
+                      <option value="Dinheiro">Dinheiro</option>
+                      <option value="Boleto Bancário">Boleto Bancário</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Data do
+                      Pagamento:</label>
+                    <input type="date" id="data-pagamento"
+                      style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.6); color: #e2e8f0; font-size: 14px;"
+                      onchange="updateReceipt()">
+                  </div>
+
+                  <div>
+                    <label
+                      style="display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: 500;">Cidade/UF:</label>
+                    <input type="text" id="cidade-recibo" placeholder="Ex: São Paulo/SP"
+                      style="width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.6); color: #e2e8f0; font-size: 14px;"
+                      oninput="updateReceipt()">
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                  <button class="btn btn-secondary" onclick="clearReceiptForm()" style="flex: 1;">
+                    🗑️ Limpar Formulário
+                  </button>
+                  <button class="btn btn-primary" onclick="generateReceiptPDF()" style="flex: 1;">
+                    🧾 Gerar PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna Direita: Visualização do Recibo -->
+            <div>
+              <div class="receipt-preview-container"
+                style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); max-height: 600px; overflow-y: auto;">
+                <h3 style="color: #feca57; margin-bottom: 20px; text-align: center;">📋 Visualização do Recibo</h3>
+
+                <div id="receipt-preview" class="receipt-preview"
+                  style="background: white; color: black; padding: 20px; border-radius: 8px; font-size: 12px; line-height: 1.4;">
+                  <h4 style="text-align: center; margin-bottom: 20px; font-size: 16px; font-weight: bold;">RECIBO DE
+                    PAGAMENTO</h4>
+
+                  <div
+                    style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                    <p style="font-size: 14px; font-weight: bold;">R$ <span id="preview-valor-recibo">[VALOR]</span></p>
+                    <p style="font-size: 11px; color: #666;">Valor por extenso: <span id="preview-valor-extenso">[VALOR
+                        POR EXTENSO]</span></p>
+                  </div>
+
+                  <p><strong>Recebi(emos) de:</strong> <span id="preview-pagador-nome">[NOME DO PAGADOR]</span></p>
+                  <p><strong>CPF/CNPJ:</strong> <span id="preview-pagador-cpf">[CPF/CNPJ]</span></p>
+                  <p style="margin-top: 10px;"><strong>Descrição do Pagamento:</strong> <span
+                      id="preview-descricao">[DESCRIÇÃO DO PAGAMENTO]</span></p>
+                  <p style="margin-top: 10px;"><strong>Forma de pagamento:</strong> <span
+                      id="preview-forma-pagamento">[FORMA DE PAGAMENTO]</span></p>
+                  <p style="margin-top: 10px;"><strong>Referente ao pagamento da licença de acesso à plataforma de
+                      ensino Midi@tiva Educa+, conforme contrato vigente.</strong></p>
+
+                  <div style="margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px;">
+                    <p style="font-size: 11px; color: #666;"><strong>Observações:</strong></p>
+                    <p style="font-size: 11px; color: #666;">- Este recibo comprova o pagamento realizado para acesso à
+                      plataforma de ensino.</p>
+                    <p style="font-size: 11px; color: #666;">- O acesso será liberado após confirmação do pagamento.</p>
+                    <p style="font-size: 11px; color: #666;">- Em caso de dúvidas, entre em contato através do e-mail ou
+                      WhatsApp.</p>
+                  </div>
+
+                  <div style="margin-top: 30px; text-align: center;">
+                    <p style="margin-bottom: 40px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                      <strong><span id="preview-recebedor-nome">[NOME DO RECEBEDOR]</span></strong>
+                    </p>
+                    <p style="font-size: 11px; color: #666;">Recebedor</p>
+                  </div>
+
+                  <p style="margin-top: 30px; text-align: right; font-size: 11px; color: #666;">
+                    <span id="preview-cidade-data-recibo">[CIDADE/UF], [DATA DO PAGAMENTO]</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Aba Configurações Completas -->
       <div id="settings-tab" class="tab-content">
         <h2 class="section-title">Configurações do Sistema</h2>
@@ -835,141 +1198,119 @@
 
         <!-- Sistema de Notificações -->
         <div class="settings-section" style="margin-top: 30px;">
-          <h3 style="color: #51cf66; margin-bottom: 20px; font-size: 1.3em;">Sistema de Notificações</h3>
-          <div class="actions-grid">
-            <div class="action-card">
-              <h3 class="action-title">Email Automático</h3>
-              <p class="action-description">
-                Configurar envio de emails automáticos
-              </p>
-              <button class="btn btn-primary" onclick="openEmailSettings()">
-                Configurar
-              </button>
+          <h3 style="color: #51cf66; margin-bottom: 20px; font-size: 1.3em;">Gerenciar Notificações</h3>
+
+          <!-- Enviar Nova Notificação -->
+          <div
+            style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <h4 style="color: #feca57; margin-bottom: 20px;">Enviar Nova Notificação</h4>
+
+            <!-- Tipo de Notificação -->
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 500;">Tipo de
+                Notificação:</label>
+              <select id="notification-type" style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 10px;
+                background: rgba(0, 0, 0, 0.6);
+                color: #e2e8f0;
+                font-size: 16px;
+              " onchange="updateNotificationMessage()">
+                <option value="">Selecione um tipo...</option>
+                <option value="inactive">Usuários inativos (inscrito mas sem pagamento)</option>
+                <option value="expiring">Contrato próximo de expirar</option>
+                <option value="expired">Contrato expirado</option>
+              </select>
             </div>
 
-            <div class="action-card">
-              <h3 class="action-title">Alertas do Sistema</h3>
-              <p class="action-description">
-                Configurar alertas de erro e manutenção
-              </p>
-              <button class="btn btn-primary" onclick="openSystemAlerts()">
-                Configurar
-              </button>
+            <!-- Título da Notificação -->
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 500;">Título da
+                Notificação:</label>
+              <input type="text" id="notification-title" readonly style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.05);
+                color: #e2e8f0;
+                font-size: 16px;
+              " placeholder="Selecione um tipo de notificação...">
             </div>
 
-            <div class="action-card">
-              <h3 class="action-title">Relatórios Agendados</h3>
-              <p class="action-description">
-                Agendar envio automático de relatórios
-              </p>
-              <button class="btn btn-primary" onclick="openScheduledReports()">
-                Agendar
-              </button>
+            <!-- Mensagem -->
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 500;">Mensagem:</label>
+              <textarea id="notification-message" readonly rows="4" style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.05);
+                color: #e2e8f0;
+                font-size: 16px;
+                resize: vertical;
+              " placeholder="Selecione um tipo de notificação para visualizar a mensagem..."></textarea>
+            </div>
+          </div>
+
+          <!-- Destinatários -->
+          <div
+            style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <h4 style="color: #feca57; margin-bottom: 15px;">Destinatários Encontrados: <span
+                id="recipient-count">0</span> usuário(s)</h4>
+            <div id="recipient-info" style="color: rgba(255, 255, 255, 0.7); margin-bottom: 15px;">Selecione um tipo de
+              notificação para buscar destinatários</div>
+
+            <!-- Tabela de Destinatários -->
+            <div id="recipients-table-container" style="display: none;">
+              <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead>
+                  <tr style="background: rgba(255, 255, 255, 0.1);">
+                    <th
+                      style="padding: 12px; text-align: left; color: #feca57; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                      Nome</th>
+                    <th
+                      style="padding: 12px; text-align: left; color: #feca57; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                      E-mail</th>
+                    <th
+                      style="padding: 12px; text-align: left; color: #feca57; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                      WhatsApp</th>
+                    <th
+                      style="padding: 12px; text-align: left; color: #feca57; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                      Data Cadastro</th>
+                    <th
+                      style="padding: 12px; text-align: left; color: #feca57; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                      Data Pagamento</th>
+                    <th
+                      style="padding: 12px; text-align: left; color: #feca57; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                      Data Expiração</th>
+                  </tr>
+                </thead>
+                <tbody id="recipients-tbody">
+                </tbody>
+              </table>
             </div>
 
-            <div class="action-card">
-              <h3 class="action-title">Preferências</h3>
-              <p class="action-description">
-                Personalizar notificações por usuário
-              </p>
-              <button class="btn btn-primary" onclick="openNotificationPreferences()">
-                Personalizar
-              </button>
+            <div id="no-recipients"
+              style="text-align: center; padding: 20px; color: rgba(255, 255, 255, 0.6); display: none;">
+              Nenhum usuário encontrado para este tipo de notificação.
             </div>
+          </div>
+
+          <!-- Botões de Ação -->
+          <div style="display: flex; gap: 15px; justify-content: flex-start;">
+            <button class="btn btn-primary" onclick="copyNotificationMessage()" id="copy-btn" disabled>
+              📋 Copiar Mensagem
+            </button>
+            <button class="btn btn-secondary" onclick="clearNotificationForm()">
+              🗑️ Limpar Formulário
+            </button>
           </div>
         </div>
 
-        <!-- Personalização da Interface -->
-        <div class="settings-section" style="margin-top: 30px;">
-          <h3 style="color: #feca57; margin-bottom: 20px; font-size: 1.3em;">Personalização da Interface</h3>
-          <div class="actions-grid">
-            <div class="action-card">
-              <h3 class="action-title">Tema do Sistema</h3>
-              <p class="action-description">
-                Alternar entre tema claro e escuro
-              </p>
-              <button class="btn btn-primary" onclick="openThemeSettings()">
-                Configurar
-              </button>
-            </div>
-
-            <div class="action-card">
-              <h3 class="action-title">Cores da Marca</h3>
-              <p class="action-description">
-                Personalizar cores do dashboard
-              </p>
-              <button class="btn btn-primary" onclick="openColorSettings()">
-                Personalizar
-              </button>
-            </div>
-
-            <div class="action-card">
-              <h3 class="action-title">Logo e Branding</h3>
-              <p class="action-description">
-                Upload de logo personalizado
-              </p>
-              <button class="btn btn-primary" onclick="openBrandingSettings()">
-                Configurar
-              </button>
-            </div>
-
-            <div class="action-card">
-              <h3 class="action-title">Layout Dashboard</h3>
-              <p class="action-description">
-                Reorganizar widgets e layout
-              </p>
-              <button class="btn btn-primary" onclick="openLayoutSettings()">
-                Organizar
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Funcionalidades Avançadas -->
-        <div class="settings-section" style="margin-top: 30px;">
-          <h3 style="color: #3498db; margin-bottom: 20px; font-size: 1.3em;">Funcionalidades Avançadas</h3>
-          <div class="actions-grid">
-            <div class="action-card">
-              <h3 class="action-title">Backup Automático</h3>
-              <p class="action-description">
-                Configurar backup automático dos dados
-              </p>
-              <button class="btn btn-primary" onclick="openBackupSettings()">
-                Configurar
-              </button>
-            </div>
-
-            <div class="action-card">
-              <h3 class="action-title">Integrações</h3>
-              <p class="action-description">
-                Configurar APIs e webhooks externos
-              </p>
-              <button class="btn btn-primary" onclick="openIntegrationSettings()">
-                Integrar
-              </button>
-            </div>
-
-            <div class="action-card">
-              <h3 class="action-title">Multi-idioma</h3>
-              <p class="action-description">
-                Suporte para múltiplos idiomas
-              </p>
-              <button class="btn btn-primary" onclick="openLanguageSettings()">
-                Configurar
-              </button>
-            </div>
-
-            <div class="action-card">
-              <h3 class="action-title">Métricas</h3>
-              <p class="action-description">
-                Configurar Google Analytics
-              </p>
-              <button class="btn btn-primary" onclick="openAnalyticsSettings()">
-                Configurar
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </main>
@@ -1432,9 +1773,11 @@
               <tr>
                 <th>Nome</th>
                 <th>E-mail</th>
+                <th>WhatsApp</th>
                 <th>Tipo</th>
                 <th>Status</th>
                 <th>Cadastro</th>
+                <th>Expiração</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -1443,7 +1786,7 @@
 
         usersToDisplay.forEach((user) => {
           try {
-            // Tratamento robusto para data
+            // Tratamento robusto para data de cadastro
             let createdDate = "N/A";
             if (user.createdAt) {
               try {
@@ -1455,6 +1798,29 @@
               }
             }
 
+            // Tratamento robusto para data de expiração
+            let expirationDate = "N/A";
+            if (user.dateExpiration) {
+              try {
+                const date = user.dateExpiration.toDate ? user.dateExpiration.toDate() : new Date(user.dateExpiration);
+                expirationDate = date.toLocaleDateString("pt-BR");
+              } catch (dateError) {
+                console.warn(`⚠️ Erro ao processar data de expiração do usuário ${user.id}:`, dateError);
+                expirationDate = "Data inválida";
+              }
+            } else if (user.datePayment && user.planType) {
+              // Calcular data de expiração se não existir mas tiver data de pagamento
+              try {
+                const durationDays = user.planType === 'pessoal' ? 90 : 360;
+                const paymentDate = user.datePayment.toDate ? user.datePayment.toDate() : new Date(user.datePayment);
+                const calculatedExpiry = new Date(paymentDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+                expirationDate = calculatedExpiry.toLocaleDateString("pt-BR");
+              } catch (dateError) {
+                console.warn(`⚠️ Erro ao calcular data de expiração do usuário ${user.id}:`, dateError);
+                expirationDate = "Não calculável";
+              }
+            }
+
             const typeClass = `user-type-${user.userType || 'unknown'}`;
             const statusClass = `status-${user.status || "active"}`;
 
@@ -1462,9 +1828,19 @@
               <tr>
                 <td>${user.name || "N/A"}</td>
                 <td>${user.email || "N/A"}</td>
+                <td>
+                  ${user.whatsapp ?
+                `<a href="https://wa.me/${user.whatsapp.replace(/\D/g, '')}" target="_blank" 
+                       style="color: #25d366; text-decoration: none;" 
+                       onmouseover="this.style.textDecoration='underline'" 
+                       onmouseout="this.style.textDecoration='none'">
+                       ${user.whatsapp}
+                     </a>` : 'N/A'}
+                </td>
                 <td><span class="user-type-badge ${typeClass}">${user.userType || "N/A"}</span></td>
                 <td><span class="status-badge ${statusClass}">${user.status || "active"}</span></td>
                 <td>${createdDate}</td>
+                <td>${expirationDate}</td>
                 <td>
                   <div class="action-buttons">
                     <button class="btn btn-secondary btn-small" onclick="editUser('${user.id}')">
@@ -2758,6 +3134,257 @@ USUÁRIOS POR TIPO:
     window.openLanguageSettings = function () { showMessage("Configurações de idioma em desenvolvimento...", "success"); };
     window.openAnalyticsSettings = function () { showMessage("Configurações de analytics em desenvolvimento...", "success"); };
 
+    // Sistema de Notificações - Novas Funções
+    window.updateNotificationMessage = function () {
+      const type = document.getElementById('notification-type').value;
+      const titleField = document.getElementById('notification-title');
+      const messageField = document.getElementById('notification-message');
+      const copyBtn = document.getElementById('copy-btn');
+
+      const messages = {
+        inactive: {
+          title: 'Ação Necessária: Ative sua Conta',
+          message: 'Olá [NOME]! Notamos que você se inscreveu na Midi@tiva Educa+ mas ainda não ativou sua conta. Para garantir acesso total à plataforma educacional, complete seu cadastro e escolha um plano. Estamos aqui para ajudar! Suporte: [EMAIL]'
+        },
+        expiring: {
+          title: 'Aviso: Seu Acesso Expira em Breve',
+          message: 'Prezado(a) [NOME], seu acesso à Midi@tiva Educa+ expirará em [DIAS] dias. Renove seu contrato para continuar desfrutando de todos os recursos educacionais exclusivos. Para renovação, acesse: [LINK] ou entre em contato: [EMAIL]'
+        },
+        expired: {
+          title: 'Acesso Expirado - Renove Agora',
+          message: 'Olá [NOME]! Seu acesso à plataforma Midi@tiva Educa+ expirou. Não perca o conteúdo educacional premium! Renove agora mesmo para recuperar acesso imediato a todos os cursos e recursos. Renove em: [LINK] | Suporte: [EMAIL]'
+        }
+      };
+
+      if (type && messages[type]) {
+        titleField.value = messages[type].title;
+        messageField.value = messages[type].message;
+        copyBtn.disabled = false;
+        updateRecipients(type);
+      } else {
+        titleField.value = '';
+        messageField.value = '';
+        copyBtn.disabled = true;
+        clearRecipients();
+      }
+    };
+
+    window.updateRecipients = function (type) {
+      const recipientCount = document.getElementById('recipient-count');
+      const recipientInfo = document.getElementById('recipient-info');
+      const tableContainer = document.getElementById('recipients-table-container');
+      const noRecipients = document.getElementById('no-recipients');
+      const tbody = document.getElementById('recipients-tbody');
+
+      // Simular busca de usuários com base no tipo
+      let filteredUsers = [];
+      let infoText = '';
+
+      if (type === 'inactive') {
+        filteredUsers = allUsers.filter(user =>
+          user.status === 'pending' ||
+          (user.createdAt && !user.datePayment)
+        );
+        infoText = 'Usuários com inscrição pendente de pagamento';
+      } else if (type === 'expiring') {
+        const today = new Date();
+        filteredUsers = allUsers.filter(user => {
+          if (!user.datePayment || user.status !== 'active') return false;
+          const paymentDate = new Date(user.datePayment);
+          const durationDays = user.planType === 'pessoal' ? 90 : 360;
+          const expiryDate = new Date(paymentDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+          const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+          return daysUntilExpiry > 0 && daysUntilExpiry <= 7; // Próximos 7 dias
+        });
+        infoText = 'Usuários com contrato próximo de expirar (próximos 7 dias)';
+      } else if (type === 'expired') {
+        const today = new Date();
+        filteredUsers = allUsers.filter(user => {
+          if (!user.datePayment || user.status !== 'active') return false;
+          const paymentDate = new Date(user.datePayment);
+          const durationDays = user.planType === 'pessoal' ? 90 : 360;
+          const expiryDate = new Date(paymentDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+          return expiryDate < today;
+        });
+        infoText = 'Usuários com contrato já expirado';
+      }
+
+      recipientCount.textContent = filteredUsers.length;
+      recipientInfo.textContent = filteredUsers.length > 0 ? infoText : `Nenhum usuário encontrado para este tipo de notificação.`;
+
+      if (filteredUsers.length > 0) {
+        tbody.innerHTML = filteredUsers.map(user => {
+          // Tratamento robusto para data de cadastro (igual ao da aba Usuários)
+          let registrationDate = "N/A";
+          if (user.createdAt) {
+            try {
+              const date = user.createdAt.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+              registrationDate = date.toLocaleDateString("pt-BR");
+            } catch (dateError) {
+              console.warn(`⚠️ Erro ao processar data de cadastro do usuário ${user.id}:`, dateError);
+              registrationDate = "Data inválida";
+            }
+          }
+
+          // Tratamento robusto para data de pagamento
+          let paymentDate = "N/A";
+          if (user.datePayment) {
+            try {
+              const date = user.datePayment.toDate ? user.datePayment.toDate() : new Date(user.datePayment);
+              paymentDate = date.toLocaleDateString("pt-BR");
+            } catch (dateError) {
+              console.warn(`⚠️ Erro ao processar data de pagamento do usuário ${user.id}:`, dateError);
+              paymentDate = "Data inválida";
+            }
+          }
+
+          // Calcular data de expiração baseada em datePayment + planType
+          let expiryDate = 'N/A';
+          if (user.datePayment && user.planType) {
+            const durationDays = user.planType === 'pessoal' ? 90 : 360;
+            const calculatedExpiry = new Date(new Date(user.datePayment).getTime() + (durationDays * 24 * 60 * 60 * 1000));
+            expiryDate = calculatedExpiry.toLocaleDateString('pt-BR');
+          }
+
+          return `
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+              <td style="padding: 12px; color: #e2e8f0;">${user.name || 'N/A'}</td>
+              <td style="padding: 12px; color: #e2e8f0;">
+                ${user.email ?
+              `<a href="mailto:${user.email}" style="color: #51cf66; text-decoration: none;" 
+                     onmouseover="this.style.textDecoration='underline'" 
+                     onmouseout="this.style.textDecoration='none'">
+                     ${user.email}
+                   </a>` : 'N/A'}
+              </td>
+              <td style="padding: 12px; color: #e2e8f0;">
+                ${user.whatsapp ?
+              `<a href="https://wa.me/${user.whatsapp.replace(/\D/g, '')}" target="_blank" 
+                     style="color: #25d366; text-decoration: none;" 
+                     onmouseover="this.style.textDecoration='underline'" 
+                     onmouseout="this.style.textDecoration='none'">
+                     ${user.whatsapp}
+                   </a>` : 'N/A'}
+              </td>
+              <td style="padding: 12px; color: #e2e8f0;">${registrationDate}</td>
+              <td style="padding: 12px; color: #e2e8f0;">
+                <input type="date" 
+                       id="payment-date-${user.id}" 
+                       value="${user.datePayment ? new Date(user.datePayment).toISOString().split('T')[0] : ''}" 
+                       style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); 
+                              border-radius: 5px; padding: 5px; color: #e2e8f0; width: 120px;"
+                       onchange="updatePaymentDate('${user.id}', this.value)">
+                ${!user.datePayment ? '<span style="color: #ff6b6b; font-size: 0.8em;">*Sem pagamento</span>' : ''}
+              </td>
+              <td style="padding: 12px; color: #e2e8f0;">${expiryDate}</td>
+            </tr>
+          `;
+        }).join('');
+        tableContainer.style.display = 'block';
+        noRecipients.style.display = 'none';
+      } else {
+        tableContainer.style.display = 'none';
+        noRecipients.style.display = 'block';
+      }
+    };
+
+    window.clearRecipients = function () {
+      document.getElementById('recipient-count').textContent = '0';
+      document.getElementById('recipient-info').textContent = 'Selecione um tipo de notificação para buscar destinatários';
+      document.getElementById('recipients-table-container').style.display = 'none';
+      document.getElementById('no-recipients').style.display = 'none';
+      document.getElementById('recipients-tbody').innerHTML = '';
+    };
+
+    window.copyNotificationMessage = function () {
+      const message = document.getElementById('notification-message').value;
+      if (message) {
+        navigator.clipboard.writeText(message).then(() => {
+          showMessage('Mensagem copiada para a área de transferência!', 'success');
+        }).catch(() => {
+          // Fallback para navegadores mais antigos
+          const textarea = document.createElement('textarea');
+          textarea.value = message;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          showMessage('Mensagem copiada para a área de transferência!', 'success');
+        });
+      }
+    };
+
+    window.updatePaymentDate = async function (userId, newDate) {
+      try {
+        const user = allUsers.find(u => u.id === userId);
+        if (!user) {
+          showMessage('Usuário não encontrado!', 'error');
+          return;
+        }
+
+        // Calcular data de expiração baseada no plano
+        let expiryDate = null;
+        if (newDate && user.planType) {
+          try {
+            const durationDays = user.planType === 'pessoal' ? 90 : 360;
+            const paymentDate = new Date(newDate);
+            expiryDate = new Date(paymentDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+          } catch (dateError) {
+            console.warn(`⚠️ Erro ao calcular data de expiração:`, dateError);
+          }
+        }
+
+        // Atualizar dados do usuário localmente
+        user.datePayment = newDate ? new Date(newDate) : null;
+        user.dateExpiration = expiryDate;
+
+        // Salvar no Firestore
+        try {
+          const userRef = doc(db, "users", userId);
+          const updateData = {
+            datePayment: newDate ? new Date(newDate) : null,
+            dateExpiration: expiryDate,
+            status: newDate ? 'active' : user.status
+          };
+
+          await updateDoc(userRef, updateData);
+
+          console.log('💾 Salvo no Firestore:', {
+            userId: userId,
+            datePayment: newDate,
+            dateExpiration: expiryDate ? expiryDate.toISOString() : null,
+            planType: user.planType
+          });
+
+          showMessage('Dados salvos com sucesso no Firestore!', 'success');
+        } catch (firestoreError) {
+          console.error('❌ Erro ao salvar no Firestore:', firestoreError);
+          showMessage('Erro ao salvar no Firestore. Tente novamente.', 'error');
+          return;
+        }
+
+        // Recarregar a tabela para mostrar as atualizações
+        const currentType = document.getElementById('notification-type').value;
+        if (currentType) {
+          updateRecipients(currentType);
+        }
+
+        showMessage(`Data de pagamento atualizada para ${user.name}!`, 'success');
+      } catch (error) {
+        console.error('❌ Erro ao atualizar data de pagamento:', error);
+        showMessage('Erro ao atualizar data de pagamento', 'error');
+      }
+    };
+
+    window.clearNotificationForm = function () {
+      document.getElementById('notification-type').value = '';
+      document.getElementById('notification-title').value = '';
+      document.getElementById('notification-message').value = '';
+      document.getElementById('copy-btn').disabled = true;
+      clearRecipients();
+      showMessage('Formulário limpo!', 'success');
+    };
+
     // Funções antigas mantidas para compatibilidade
     window.createBackup = function () {
       showMessage("Use 'Exportar Dados' para criar backup", "warning");
@@ -2771,6 +3398,305 @@ USUÁRIOS POR TIPO:
       }
     };
 
+    // Funções para a Aba Recibo
+    window.updateReceipt = function () {
+      try {
+        console.log('🔄 Atualizando visualização do recibo...');
+
+        // Obter valores do formulário
+        const recebedorNome = document.getElementById('recebedor-nome').value || '[NOME DO RECEBEDOR]';
+        const pagadorNome = document.getElementById('pagador-nome').value || '[NOME DO PAGADOR]';
+        const pagadorCpf = document.getElementById('pagador-cpf').value || '[CPF/CNPJ]';
+        const descricaoPagamento = document.getElementById('descricao-pagamento').value || '[DESCRIÇÃO DO PAGAMENTO]';
+        const valorRecibo = document.getElementById('valor-recibo').value || '[VALOR]';
+        const formaPagamento = document.getElementById('forma-pagamento').value || '[FORMA DE PAGAMENTO]';
+        const cidadeRecibo = document.getElementById('cidade-recibo').value || '[CIDADE/UF]';
+        const dataPagamento = document.getElementById('data-pagamento').value;
+
+        // Format data if exists
+        let dataFormatada = '[DATA DO PAGAMENTO]';
+        if (dataPagamento) {
+          const data = new Date(dataPagamento);
+          dataFormatada = data.toLocaleDateString('pt-BR');
+        }
+
+        // Converter valor para extenso (simplificado)
+        let valorExtenso = '[VALOR POR EXTENSO]';
+        if (valorRecibo && valorRecibo !== '[VALOR]') {
+          valorExtenso = converterValorParaExtenso(valorRecibo);
+        }
+
+        // Atualizar elementos de visualização
+        const previewRecebedorNome = document.getElementById('preview-recebedor-nome');
+        const previewPagadorNome = document.getElementById('preview-pagador-nome');
+        const previewPagadorCpf = document.getElementById('preview-pagador-cpf');
+        const previewDescricao = document.getElementById('preview-descricao');
+        const previewValorRecibo = document.getElementById('preview-valor-recibo');
+        const previewValorExtenso = document.getElementById('preview-valor-extenso');
+        const previewFormaPagamento = document.getElementById('preview-forma-pagamento');
+        const previewCidadeDataRecibo = document.getElementById('preview-cidade-data-recibo');
+
+        if (previewRecebedorNome) previewRecebedorNome.textContent = recebedorNome;
+        if (previewPagadorNome) previewPagadorNome.textContent = pagadorNome;
+        if (previewPagadorCpf) previewPagadorCpf.textContent = pagadorCpf;
+        if (previewDescricao) previewDescricao.textContent = descricaoPagamento;
+        if (previewValorRecibo) previewValorRecibo.textContent = valorRecibo;
+        if (previewValorExtenso) previewValorExtenso.textContent = valorExtenso;
+        if (previewFormaPagamento) previewFormaPagamento.textContent = formaPagamento;
+        if (previewCidadeDataRecibo) previewCidadeDataRecibo.textContent = `${cidadeRecibo}, ${dataFormatada}`;
+
+        console.log('✅ Recibo atualizado com sucesso!');
+      } catch (error) {
+        console.error('❌ Erro ao atualizar recibo:', error);
+        showMessage('Erro ao atualizar visualização do recibo', 'error');
+      }
+    };
+
+    window.clearReceiptForm = function () {
+      try {
+        console.log('🗑️ Limpando formulário do recibo...');
+
+        // Limpar campos do formulário
+        document.getElementById('recebedor-nome').value = '';
+        document.getElementById('pagador-nome').value = '';
+        document.getElementById('pagador-cpf').value = '';
+        document.getElementById('descricao-pagamento').value = '';
+        document.getElementById('valor-recibo').value = '';
+        document.getElementById('forma-pagamento').value = '';
+        document.getElementById('data-pagamento').value = '';
+        document.getElementById('cidade-recibo').value = '';
+
+        // Resetar visualização para valores padrão
+        document.getElementById('preview-recebedor-nome').textContent = '[NOME DO RECEBEDOR]';
+        document.getElementById('preview-pagador-nome').textContent = '[NOME DO PAGADOR]';
+        document.getElementById('preview-pagador-cpf').textContent = '[CPF/CNPJ]';
+        document.getElementById('preview-descricao').textContent = '[DESCRIÇÃO DO PAGAMENTO]';
+        document.getElementById('preview-valor-recibo').textContent = '[VALOR]';
+        document.getElementById('preview-valor-extenso').textContent = '[VALOR POR EXTENSO]';
+        document.getElementById('preview-forma-pagamento').textContent = '[FORMA DE PAGAMENTO]';
+        document.getElementById('preview-cidade-data-recibo').textContent = '[CIDADE/UF], [DATA DO PAGAMENTO]';
+
+        showMessage('Formulário do recibo limpo com sucesso!', 'success');
+        console.log('✅ Formulário do recibo limpo com sucesso!');
+      } catch (error) {
+        console.error('❌ Erro ao limpar formulário do recibo:', error);
+        showMessage('Erro ao limpar formulário do recibo', 'error');
+      }
+    };
+
+    window.generateReceiptPDF = function () {
+      try {
+        console.log('🖨️ Abrindo janela de impressão do recibo...');
+        showMessage('Preparando recibo para impressão...', 'success');
+
+        // Verificar se o recibo tem dados preenchidos
+        const recebedorNome = document.getElementById('recebedor-nome').value;
+        const pagadorNome = document.getElementById('pagador-nome').value;
+
+        if (!recebedorNome || !pagadorNome) {
+          showMessage('Por favor, preencha pelo menos o nome do recebedor e do pagador antes de imprimir.', 'error');
+          return;
+        }
+
+        // Obter o elemento de visualização do recibo
+        const receiptPreview = document.getElementById('receipt-preview');
+
+        if (!receiptPreview) {
+          showMessage('Erro: Visualização do recibo não encontrada.', 'error');
+          return;
+        }
+
+        // Criar uma nova janela para impressão
+        const printWindow = window.open('', '_blank');
+
+        if (!printWindow) {
+          showMessage('Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está desativado.', 'error');
+          return;
+        }
+
+        // Preparar o conteúdo para impressão com estilos apropriados
+        const printContent = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo de Pagamento</title>
+    <style>
+        @media print {
+            body { 
+                font-family: Arial, sans-serif; 
+                line-height: 1.4; 
+                color: black; 
+                margin: 20px; 
+                font-size: 12pt;
+            }
+            h4 { 
+                text-align: center; 
+                margin-bottom: 20px; 
+                font-size: 16pt; 
+                font-weight: bold; 
+            }
+            p { margin-bottom: 10px; }
+            strong { font-weight: bold; }
+            .no-print { display: none; }
+        }
+        @media screen {
+            body { 
+                font-family: Arial, sans-serif; 
+                line-height: 1.4; 
+                color: black; 
+                margin: 20px; 
+                padding: 20px;
+                background: white;
+            }
+            h4 { 
+                text-align: center; 
+                margin-bottom: 20px; 
+                font-size: 16px; 
+                font-weight: bold; 
+            }
+            .print-button { 
+                padding: 10px 20px; 
+                background: #007bff; 
+                color: white; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+                margin: 20px 0;
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button class="print-button" onclick="window.print()">🧾 Imprimir Recibo</button>
+        <p style="color: #666; font-size: 14px;">Clique no botão acima ou use Ctrl+P para imprimir.</p>
+        <hr style="margin: 20px 0;">
+    </div>
+    
+    ${receiptPreview.innerHTML}
+    
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 10pt; color: #666;">
+        <p><strong>Data de Geração:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+        <p><strong>Recebedor:</strong> ${recebedorNome || '[NÃO INFORMADO]'}</p>
+        <p><strong>Pagador:</strong> ${pagadorNome || '[NÃO INFORMADO]'}</p>
+        <p><strong>Valor:</strong> ${document.getElementById('valor-recibo').value || '[NÃO INFORMADO]'}</p>
+        <p><strong>Forma de Pagamento:</strong> ${document.getElementById('forma-pagamento').value || '[NÃO INFORMADO]'}</p>
+    </div>
+</html>
+        `;
+
+        // Escrever o conteúdo na nova janela
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+
+        console.log('✅ Janela de impressão do recibo aberta com sucesso!');
+        showMessage('Janela de impressão aberta! Use Ctrl+P ou o botão Imprimir.', 'success');
+
+      } catch (error) {
+        console.error('❌ Erro ao abrir janela de impressão do recibo:', error);
+        showMessage('Erro ao abrir janela de impressão do recibo', 'error');
+      }
+    };
+
+    // Função auxiliar para converter valor para extenso (simplificada)
+    function converterValorParaExtenso(valor) {
+      try {
+        // Remover caracteres não numéricos e converter para número
+        const numero = parseFloat(valor.replace(/[^\d,]/g, '').replace(',', '.'));
+
+        if (isNaN(numero)) {
+          return '[VALOR INVÁLIDO]';
+        }
+
+        const unidades = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+        const teens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+        const dezenas = ['vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+        const centenas = ['cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+        if (numero === 0) {
+          return 'zero reais';
+        }
+
+        if (numero === 1) {
+          return 'um real';
+        }
+
+        let extenso = '';
+        let parteInteira = Math.floor(numero);
+        let parteDecimal = Math.round((numero - parteInteira) * 100);
+
+        // Converter parte inteira
+        if (parteInteira > 0) {
+          if (parteInteira >= 1000) {
+            const milhares = Math.floor(parteInteira / 1000);
+            extenso += converterValorParaExtenso(milhares.toString()) + ' mil ';
+            parteInteira %= 1000;
+          }
+
+          if (parteInteira >= 100) {
+            const centena = Math.floor(parteInteira / 100);
+            if (centena === 1 && parteInteira === 100) {
+              extenso += 'cem';
+            } else {
+              extenso += centenas[centena - 1];
+            }
+            parteInteira %= 100;
+            if (parteInteira > 0) {
+              extenso += ' e ';
+            }
+          }
+
+          if (parteInteira >= 20) {
+            const dezena = Math.floor(parteInteira / 10);
+            extenso += dezenas[dezena - 2];
+            parteInteira %= 10;
+            if (parteInteira > 0) {
+              extenso += ' e ';
+            }
+          }
+
+          if (parteInteira >= 10) {
+            extenso += teens[parteInteira - 10];
+          } else if (parteInteira > 0) {
+            extenso += unidades[parteInteira];
+          }
+
+          extenso += parteInteira === 1 ? ' real' : ' reais';
+        }
+
+        // Converter parte decimal
+        if (parteDecimal > 0) {
+          if (extenso) {
+            extenso += ' e ';
+          }
+          if (parteDecimal >= 20) {
+            const dezena = Math.floor(parteDecimal / 10);
+            extenso += dezenas[dezena - 2];
+            parteDecimal %= 10;
+            if (parteDecimal > 0) {
+              extenso += ' e ';
+            }
+          }
+
+          if (parteDecimal >= 10) {
+            extenso += teens[parteDecimal - 10];
+          } else if (parteDecimal > 0) {
+            extenso += unidades[parteDecimal];
+          }
+
+          extenso += parteDecimal === 1 ? ' centavo' : ' centavos';
+        }
+
+        return extenso || '[ERRO NA CONVERSÃO]';
+      } catch (error) {
+        console.error('Erro ao converter valor para extenso:', error);
+        return '[ERRO NA CONVERSÃO]';
+      }
+    }
+
     // Limpar recursos quando sair da página
     window.addEventListener('beforeunload', () => {
       console.log('(\ud83d\udd04 Limpando recursos do dashboard...');
@@ -2779,6 +3705,200 @@ USUÁRIOS POR TIPO:
         console.log('(\u2705 Inscrição do Firestore cancelada');
       }
     });
+
+    // Funções para a Aba Contrato
+    window.updateContract = function () {
+      try {
+        console.log('🔄 Atualizando visualização do contrato...');
+
+        // Obter valores do formulário
+        const plataformaNome = document.getElementById('plataforma-nome').value || '[NOME DA SUA PLATAFORMA/SEU NOME OU EMPRESA]';
+        const clienteNome = document.getElementById('cliente-nome').value || '[NOME DO CLIENTE/INSTITUIÇÃO]';
+        const clienteCnpj = document.getElementById('cliente-cnpj').value || '[NÚMERO]';
+        const modalidade = document.getElementById('modalidade').value || '[PESSOAL ou INSTITUCIONAL]';
+        const valor = document.getElementById('valor').value || '[VALOR]';
+        const cidade = document.getElementById('cidade').value || '[CIDADE/UF]';
+        const dataContrato = document.getElementById('data-contrato').value;
+
+        // Format data if exists
+        let dataFormatada = '[DATA DO CONTRATO]';
+        if (dataContrato) {
+          const data = new Date(dataContrato);
+          dataFormatada = data.toLocaleDateString('pt-BR');
+        }
+
+        // Atualizar elementos de visualização
+        const previewPlataforma = document.getElementById('preview-plataforma');
+        const previewCliente = document.getElementById('preview-cliente');
+        const previewCnpj = document.getElementById('preview-cnpj');
+        const previewModalidade = document.getElementById('preview-modalidade');
+        const previewValor = document.getElementById('preview-valor');
+        const previewPlataformaAssinatura = document.getElementById('preview-plataforma-assinatura');
+        const previewClienteAssinatura = document.getElementById('preview-cliente-assinatura');
+        const previewCidadeData = document.getElementById('preview-cidade-data');
+
+        if (previewPlataforma) previewPlataforma.textContent = plataformaNome;
+        if (previewCliente) previewCliente.textContent = clienteNome;
+        if (previewCnpj) previewCnpj.textContent = clienteCnpj;
+        if (previewModalidade) previewModalidade.textContent = modalidade;
+        if (previewValor) previewValor.textContent = valor;
+        if (previewPlataformaAssinatura) previewPlataformaAssinatura.textContent = plataformaNome;
+        if (previewClienteAssinatura) previewClienteAssinatura.textContent = clienteNome;
+        if (previewCidadeData) previewCidadeData.textContent = `${cidade}, ${dataFormatada}`;
+
+        console.log('✅ Contrato atualizado com sucesso!');
+      } catch (error) {
+        console.error('❌ Erro ao atualizar contrato:', error);
+        showMessage('Erro ao atualizar visualização do contrato', 'error');
+      }
+    };
+
+    window.clearContractForm = function () {
+      try {
+        console.log('🗑️ Limpando formulário do contrato...');
+
+        // Limpar campos do formulário
+        document.getElementById('plataforma-nome').value = '';
+        document.getElementById('cliente-nome').value = '';
+        document.getElementById('cliente-cnpj').value = '';
+        document.getElementById('modalidade').value = '';
+        document.getElementById('valor').value = '';
+        document.getElementById('cidade').value = '';
+        document.getElementById('data-contrato').value = '';
+
+        // Resetar visualização para valores padrão
+        document.getElementById('preview-plataforma').textContent = '[NOME DA SUA PLATAFORMA/SEU NOME OU EMPRESA]';
+        document.getElementById('preview-cliente').textContent = '[NOME DO CLIENTE/INSTITUIÇÃO]';
+        document.getElementById('preview-cnpj').textContent = '[NÚMERO]';
+        document.getElementById('preview-modalidade').textContent = '[PESSOAL ou INSTITUCIONAL]';
+        document.getElementById('preview-valor').textContent = '[VALOR]';
+        document.getElementById('preview-plataforma-assinatura').textContent = '[NOME DA SUA PLATAFORMA/SEU NOME OU EMPRESA]';
+        document.getElementById('preview-cliente-assinatura').textContent = '[NOME DO CLIENTE/INSTITUIÇÃO]';
+        document.getElementById('preview-cidade-data').textContent = '[CIDADE/UF], [DATA DO CONTRATO]';
+
+        showMessage('Formulário limpo com sucesso!', 'success');
+        console.log('✅ Formulário do contrato limpo com sucesso!');
+      } catch (error) {
+        console.error('❌ Erro ao limpar formulário:', error);
+        showMessage('Erro ao limpar formulário', 'error');
+      }
+    };
+
+    window.generateContractPDF = function () {
+      try {
+        console.log('🖨️ Abrindo janela de impressão do contrato...');
+        showMessage('Preparando contrato para impressão...', 'success');
+
+        // Verificar se o contrato tem dados preenchidos
+        const plataformaNome = document.getElementById('plataforma-nome').value;
+        const clienteNome = document.getElementById('cliente-nome').value;
+
+        if (!plataformaNome || !clienteNome) {
+          showMessage('Por favor, preencha pelo menos o nome da plataforma e do cliente antes de imprimir.', 'error');
+          return;
+        }
+
+        // Obter o elemento de visualização do contrato
+        const contractPreview = document.getElementById('contract-preview');
+
+        if (!contractPreview) {
+          showMessage('Erro: Visualização do contrato não encontrada.', 'error');
+          return;
+        }
+
+        // Criar uma nova janela para impressão
+        const printWindow = window.open('', '_blank');
+
+        if (!printWindow) {
+          showMessage('Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está desativado.', 'error');
+          return;
+        }
+
+        // Preparar o conteúdo para impressão com estilos apropriados
+        const printContent = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrato de Licença de Acesso</title>
+    <style>
+        @media print {
+            body { 
+                font-family: Arial, sans-serif; 
+                line-height: 1.4; 
+                color: black; 
+                margin: 20px; 
+                font-size: 12pt;
+            }
+            h4 { 
+                text-align: center; 
+                margin-bottom: 20px; 
+                font-size: 16pt; 
+                font-weight: bold; 
+            }
+            p { margin-bottom: 10px; }
+            strong { font-weight: bold; }
+            .no-print { display: none; }
+        }
+        @media screen {
+            body { 
+                font-family: Arial, sans-serif; 
+                line-height: 1.4; 
+                color: black; 
+                margin: 20px; 
+                padding: 20px;
+                background: white;
+            }
+            h4 { 
+                text-align: center; 
+                margin-bottom: 20px; 
+                font-size: 16px; 
+                font-weight: bold; 
+            }
+            .print-button { 
+                padding: 10px 20px; 
+                background: #007bff; 
+                color: white; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+                margin: 20px 0;
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button class="print-button" onclick="window.print()">🖨️ Imprimir Contrato</button>
+        <p style="color: #666; font-size: 14px;">Clique no botão acima ou use Ctrl+P para imprimir.</p>
+        <hr style="margin: 20px 0;">
+    </div>
+    
+    ${contractPreview.innerHTML}
+    
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 10pt; color: #666;">
+        <p><strong>Data de Geração:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+        <p><strong>Cliente:</strong> ${clienteNome || '[NÃO INFORMADO]'}</p>
+        <p><strong>Plataforma:</strong> ${plataformaNome || '[NÃO INFORMADO]'}</p>
+        <p><strong>Valor:</strong> ${document.getElementById('valor').value || '[NÃO INFORMADO]'}</p>
+    </div>
+</html>
+        `;
+
+        // Escrever o conteúdo na nova janela
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+
+        console.log('✅ Janela de impressão aberta com sucesso!');
+        showMessage('Janela de impressão aberta! Use Ctrl+P ou o botão Imprimir.', 'success');
+
+      } catch (error) {
+        console.error('❌ Erro ao abrir janela de impressão:', error);
+        showMessage('Erro ao abrir janela de impressão', 'error');
+      }
+    };
 
     // Log de inicialização concluída
     console.log('(\ud83d\ude80 Dashboard Administrativo inicializado com sucesso!');
